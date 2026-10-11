@@ -498,15 +498,15 @@ html { background: #3b2c1e; }
   z-index: 1;
   transition: opacity .6s ease;
 }
-.bg-layer[data-level="1"] { background-image: var(--bg-lv1); }
-.bg-layer[data-level="2"] { background-image: var(--bg-lv2); }
-.bg-layer[data-level="3"] { background-image: var(--bg-lv3); }
-.bg-layer[data-level="4"] { background-image: var(--bg-lv4); }
-.bg-layer[data-level="5"] { background-image: var(--bg-lv5); }
-.bg-layer[data-level="6"] { background-image: var(--bg-lv6); }
-.bg-layer[data-level="7"] { background-image: var(--bg-lv7); }
-.bg-layer[data-level="8"] { background-image: var(--bg-lv8); }
-.bg-layer[data-level="9"] { background-image: var(--bg-lv9); }
+.bg-layer[data-level="1"] { background-image: var(--bg-lv1); --img: var(--bg-lv1); }
+.bg-layer[data-level="2"] { background-image: var(--bg-lv2); --img: var(--bg-lv2); }
+.bg-layer[data-level="3"] { background-image: var(--bg-lv3); --img: var(--bg-lv3); }
+.bg-layer[data-level="4"] { background-image: var(--bg-lv4); --img: var(--bg-lv4); }
+.bg-layer[data-level="5"] { background-image: var(--bg-lv5); --img: var(--bg-lv5); }
+.bg-layer[data-level="6"] { background-image: var(--bg-lv6); --img: var(--bg-lv6); }
+.bg-layer[data-level="7"] { background-image: var(--bg-lv7); --img: var(--bg-lv7); }
+.bg-layer[data-level="8"] { background-image: var(--bg-lv8); --img: var(--bg-lv8); }
+.bg-layer[data-level="9"] { background-image: var(--bg-lv9); --img: var(--bg-lv9); }
 
 /* 有表格／查詢結果的頁面：背景圖調淡（想再淡或再濃，只要改下面這個透明度數字） */
 #bg-veil {
@@ -607,9 +607,37 @@ html { background: #3b2c1e; }
   .bg-layer[data-level="9"] { background-position: 75% 50%; }   /* 墨鏡貓：保留 NG 牌與墨鏡貓的全臉 */
 }
 
+/* ============================================================
+ * 背景圖縮放（電腦／橫式視窗）：
+ *   整張圖依視窗高度縮放、完整顯示，不再被裁掉；
+ *   圖的左右兩側若有空位，用同一張圖放大＋模糊墊底，看起來是連在一起的。
+ *   視窗拉大拉小，圖會跟著縮放。選單靠左上，剛好落在墊底的區域，不會擋到圖。
+ *   手機直式維持原本「滿版＋依圖調整取景」的做法。
+ * 想改回滿版裁切：把這一整段刪掉即可。
+ * ============================================================ */
+@media (min-aspect-ratio: 1/1) {
+  .bg-layer[data-level] { background-image: none !important; }
+  .bg-layer::before,
+  .bg-layer::after {
+    content: '';
+    position: absolute;
+    background-image: var(--img);
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+  .bg-layer::before {            /* 墊底：放大＋模糊＋略暗 */
+    inset: -40px;
+    background-size: cover;
+    filter: blur(26px) brightness(.8);
+  }
+  .bg-layer::after {             /* 主圖：完整顯示 */
+    inset: 0;
+    background-size: contain;
+  }
+}
+
 /* 電腦／橫式：選單靠左上 */
 @media (min-aspect-ratio: 1/1) {
-  .bg-layer[data-level="1"] { background-position: 50% 0%; }   /* 首頁：橫式取景對齊最上緣，完整露出「DOA」招牌 */
   .page.page-menu.active { align-items: flex-start; }
   .menu-box { margin-left: clamp(16px, 3.5vw, 64px); margin-top: 64px; }
 }
