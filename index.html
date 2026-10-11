@@ -504,6 +504,9 @@ html { background: #3b2c1e; }
 .bg-layer[data-level="4"] { background-image: var(--bg-lv4); }
 .bg-layer[data-level="5"] { background-image: var(--bg-lv5); }
 .bg-layer[data-level="6"] { background-image: var(--bg-lv6); }
+.bg-layer[data-level="7"] { background-image: var(--bg-lv7); }
+.bg-layer[data-level="8"] { background-image: var(--bg-lv8); }
+.bg-layer[data-level="9"] { background-image: var(--bg-lv9); }
 
 /* 有表格／查詢結果的頁面：背景圖調淡（想再淡或再濃，只要改下面這個透明度數字） */
 #bg-veil {
@@ -664,20 +667,20 @@ button:focus-visible {
 <style id="bg-images">/* 背景圖網址由下面的 script 設定（圖片放在 GitHub） */</style>
 <script>
 /* ===== 背景圖 =====
-   6 張圖（lv1.webp ~ lv6.webp）放在跟這個網頁同一個資料夾
+   9 張圖（lv1.webp ~ lv9.webp）放在跟這個網頁同一個資料夾
    （GitHub 倉庫 -2 的最上層，跟 index.html 放在一起）。BG_BASE 留空就是讀同一個資料夾；
    之後想改放別處，把 BG_BASE 換成資料夾網址（結尾要有 /）即可。
    換圖之後如果畫面還是舊圖，把 BG_VERSION 加 1 */
 var BG_BASE = '';
-var BG_VERSION = '1';
+var BG_VERSION = '2';
 (function () {
   function url(n) { return BG_BASE + 'lv' + n + '.webp?v=' + BG_VERSION; }
-  for (var n = 1; n <= 6; n++) {
+  for (var n = 1; n <= 9; n++) {
     document.documentElement.style.setProperty('--bg-lv' + n, 'url("' + url(n) + '")');
   }
   // 頁面載入完成後，把其他層級的圖先抓進快取，換頁時背景才不會慢半拍
   window.addEventListener('load', function () {
-    for (var n = 1; n <= 6; n++) { var im = new Image(); im.src = url(n); }
+    for (var n = 1; n <= 9; n++) { var im = new Image(); im.src = url(n); }
   });
 })();
 </script>
@@ -692,6 +695,9 @@ var BG_VERSION = '1';
   <div class="bg-layer" data-level="4"></div>
   <div class="bg-layer" data-level="5"></div>
   <div class="bg-layer" data-level="6"></div>
+  <div class="bg-layer" data-level="7"></div>
+  <div class="bg-layer" data-level="8"></div>
+  <div class="bg-layer" data-level="9"></div>
   <div id="bg-veil"></div>
 </div>
 
@@ -1659,7 +1665,7 @@ var BG_VERSION = '1';
  * 貼上你「部署 Apps Script 為網頁應用程式」後拿到的網址
  * (格式類似 https://script.google.com/macros/s/AKfycb.../exec)
  * ============================================================ */
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_wEKRsdRAjNQ63fY2EaaK-jD0Q8iA41A4IEM4DPUci5teFAHwe2_IchpuYwK1SFIltA/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxCPxvzbitsDRyPNT-EFnEUaRJxKNFjtxFN78IYkT5Efhq8qPX0DqBE3jKQajzvJNREmw/exec';
 
 /* ============================================================
  * google.script.run 相容層（Compatibility Shim）
@@ -2868,31 +2874,30 @@ let navHistory = [];
 let currentPageId = 'page-welcome';
 
 /* ============================================================
- * 背景圖：依頁面「層級」切換（首頁＝第1層，點進去一層加一層），
- * 頁面內有表格／查詢結果就把背景調淡。新增頁面時，只要在
- * PAGE_LEVEL 補上該頁的層級即可（沒補的頁面會沿用目前背景）。
+ * 背景圖：每個頁面各自指定一張圖（PAGE_LEVEL 的數字 ＝ 第幾張圖，
+ * 1～9 對應 lv1.webp ～ lv9.webp），頁面內有表格／查詢結果就把背景調淡。
+ * 新增頁面時，在 PAGE_LEVEL 補上該頁要用第幾張圖即可
+ * （沒補的頁面會沿用目前背景）。
  * ============================================================ */
 const PAGE_LEVEL = {
-  'page-welcome': 1,
-  // 第 2 層：首頁點一下進入的頁面
-  'page-choice': 2, 'page-special-choice': 2, 'page-issue-menu': 2,
-  'page-designated-menu': 2, 'page-executor-login': 2,
-  // 第 3 層
-  'page-inbound-choice': 3, 'page-outbound-choice': 3, 'page-batch-upload': 3,
-  'page-query-choice': 3, 'page-adjust-search': 3, 'page-rename-search': 3,
-  'page-special-inbound-choice': 3, 'page-special-outbound-choice': 3,
-  'page-issue-report': 3, 'page-designated-upload': 3, 'page-executor-menu': 3,
-  // 第 4 層
-  'page-inbound-input': 4, 'page-inbound-part': 4, 'page-out-pallet': 4, 'page-out-sn': 4,
-  'page-out-pick': 4, 'page-batch-confirm': 4, 'page-query-empty-pallet': 4,
-  'page-query-sn': 4, 'page-query-inventory': 4, 'page-adjust-confirm': 4,
-  'page-rename-confirm': 4, 'page-special-sn': 4, 'page-special-part': 4,
-  'page-designated-scan': 4, 'page-executor-region': 4, 'page-executor-changelog': 4,
-  // 第 5 層
-  'page-inbound-confirm': 5, 'page-out-pick-confirm': 5, 'page-out-exception': 5,
-  'page-special-reason': 5,
-  // 第 6 層：操作完成
-  'page-success': 6
+  // 第 1 張（lv1.webp）DOA 大門
+  'page-welcome': 1, 'page-executor-login': 1, 'page-executor-menu': 1, 'page-executor-region': 1, 'page-executor-changelog': 1,
+  // 第 2 張（lv2.webp）火鍋
+  'page-choice': 2, 'page-designated-menu': 2, 'page-designated-upload': 2, 'page-designated-scan': 2, 'page-success': 2,
+  // 第 3 張（lv3.webp）烤肉
+  'page-inbound-choice': 3, 'page-inbound-input': 3, 'page-inbound-part': 3, 'page-inbound-confirm': 3,
+  // 第 4 張（lv4.webp）野餐
+  'page-adjust-search': 4, 'page-adjust-confirm': 4, 'page-rename-search': 4, 'page-rename-confirm': 4,
+  // 第 5 張（lv5.webp）準時下班
+  'page-outbound-choice': 5, 'page-out-pallet': 5, 'page-out-sn': 5, 'page-out-pick': 5, 'page-out-pick-confirm': 5,
+  // 第 6 張（lv6.webp）團團圓圓
+  'page-batch-upload': 6, 'page-batch-confirm': 6, 'page-query-inventory': 6,
+  // 第 7 張（lv7.webp）樹葉右
+  'page-query-choice': 7, 'page-query-empty-pallet': 7, 'page-query-sn': 7,
+  // 第 8 張（lv8.webp）溫泉
+  'page-special-choice': 8, 'page-special-inbound-choice': 8, 'page-special-outbound-choice': 8, 'page-special-sn': 8, 'page-special-part': 8, 'page-special-reason': 8,
+  // 第 9 張（lv9.webp）墨鏡貓 NG
+  'page-out-exception': 9, 'page-issue-menu': 9, 'page-issue-report': 9
 };
 
 /* ============================================================
