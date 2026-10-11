@@ -603,10 +603,13 @@ html { background: #3b2c1e; }
   .bg-layer[data-level="1"] { background-position: 50% 50%; }
   .bg-layer[data-level="2"] { background-position: 90% 50%; }
   .bg-layer[data-level="3"] { background-position: 80% 50%; }
+  .bg-layer[data-level="8"] { background-position: 90% 50%; }   /* 溫泉：選單靠左上，取景偏右，不擋住胖貓與小貓 */
+  .bg-layer[data-level="9"] { background-position: 75% 50%; }   /* 墨鏡貓：保留 NG 牌與墨鏡貓的全臉 */
 }
 
 /* 電腦／橫式：選單靠左上 */
 @media (min-aspect-ratio: 1/1) {
+  .bg-layer[data-level="1"] { background-position: 50% 0%; }   /* 首頁：橫式取景對齊最上緣，完整露出「DOA」招牌 */
   .page.page-menu.active { align-items: flex-start; }
   .menu-box { margin-left: clamp(16px, 3.5vw, 64px); margin-top: 64px; }
 }
