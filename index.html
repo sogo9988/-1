@@ -657,6 +657,68 @@ html { background: #3b2c1e; }
 }
 
 /* ============================================================
+ * 電腦／橫式：選單文字放進圖裡
+ * 背景圖完整顯示後，左右會有墊底的空位；選單改成對齊「圖片本身」的左上角
+ * （而不是視窗左邊），文字就會落在圖中。--ar 是目前這張圖的寬高比，
+ * 由 JS（applyBackdrop_）依頁面設定，視窗縮放時會自動跟著算。
+ * ============================================================ */
+:root { --ar: 1.0391; }
+@media (min-aspect-ratio: 1/1) {
+  :root {
+    --frame-h: min(100lvh, calc(100vw / var(--ar)));        /* 圖片顯示高度 */
+    --frame-w: min(100vw, calc(100lvh * var(--ar)));        /* 圖片顯示寬度 */
+    --frame-t: calc((100lvh - var(--frame-h)) / 2);          /* 圖片上緣離視窗上緣 */
+    --frame-l: calc((100vw - var(--frame-w)) / 2);           /* 圖片左緣離視窗左緣 */
+    --frame-pad: clamp(10px, 2.2vw, 28px);                   /* 離圖片邊緣的留白 */
+  }
+  .menu-box {
+    margin-left: calc(var(--frame-l) + var(--frame-pad));
+    margin-top: calc(var(--frame-t) + clamp(24px, 6vh, 64px));
+    transform: scale(var(--ui-scale, 1));       /* 選單文字與按鈕跟著圖一起放大縮小 */
+    transform-origin: top left;
+  }
+
+  /* 首頁：標題與按鈕置中，放在「入庫／發料／盤點」招牌下方的門板上 */
+  #page-welcome.page-menu.active { align-items: center; }
+  #page-welcome .menu-box {
+    align-items: center;
+    text-align: center;
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: calc(var(--frame-t) + var(--frame-h) * .44);
+    transform-origin: top center;
+  }
+  #page-welcome h2,
+  #page-welcome p { text-align: center; }
+  #page-welcome .menu-grid { justify-content: center; }
+
+  /* 「請選擇入庫方式」：靠圖片右側，選單頂端貼在天花板燈泡的下緣 */
+  #page-inbound-choice .menu-box {
+    margin-left: 0;
+    margin-right: calc(var(--frame-l) + var(--frame-pad));
+    margin-top: calc(var(--frame-t) + var(--frame-h) * .14);
+    transform-origin: top right;
+  }
+
+  /* 查詢方式：避開左側的人員名牌，放在天空區 */
+  #page-query-choice .menu-box { margin-left: calc(var(--frame-l) + var(--frame-w) * .27); }
+  /* 發料方式：避開左側「準時下班」布條 */
+  #page-outbound-choice .menu-box { margin-left: calc(var(--frame-l) + var(--frame-w) * .2); }
+  /* K01 特殊倉：靠圖片右上（櫻花區），不擋住「放鬆一下」布條 */
+  #page-special-choice.page-menu.active,
+  #page-special-inbound-choice.page-menu.active,
+  #page-special-outbound-choice.page-menu.active { align-items: flex-end; }
+  #page-special-choice .menu-box,
+  #page-special-inbound-choice .menu-box,
+  #page-special-outbound-choice .menu-box {
+    margin-left: 0;
+    margin-right: calc(var(--frame-l) + var(--frame-pad));
+    margin-top: calc(var(--frame-t) + var(--frame-h) * .05);
+    transform-origin: top right;
+  }
+}
+
+/* ============================================================
  * 表單頁按鈕（維持原本的統一尺寸）：同一種按鈕高度、字級、圓角一致，
  * 動作按鈕等寬排列，手機自動變兩欄
  * ============================================================ */
@@ -1696,7 +1758,7 @@ var BG_VERSION = '2';
  * 貼上你「部署 Apps Script 為網頁應用程式」後拿到的網址
  * (格式類似 https://script.google.com/macros/s/AKfycb.../exec)
  * ============================================================ */
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxCPxvzbitsDRyPNT-EFnEUaRJxKNFjtxFN78IYkT5Efhq8qPX0DqBE3jKQajzvJNREmw/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQYla6UCXQQYs1A8aRWVleYLU1aSpehLLW1PLEWr2bXIbu4Gfj89bhI8fNHgerdkbv0A/exec';
 
 /* ============================================================
  * google.script.run 相容層（Compatibility Shim）
@@ -2910,6 +2972,7 @@ let currentPageId = 'page-welcome';
  * 新增頁面時，在 PAGE_LEVEL 補上該頁要用第幾張圖即可
  * （沒補的頁面會沿用目前背景）。
  * ============================================================ */
+const BG_ASPECT = {1: 1.0391, 2: 1.1168, 3: 1.0, 4: 0.978, 5: 0.7467, 6: 0.7467, 7: 1.0573, 8: 1.0, 9: 0.8159};   // 各張圖的寬高比（寬÷高），換圖後要一起更新
 const PAGE_LEVEL = {
   // 第 1 張（lv1.webp）DOA 大門
   'page-welcome': 1, 'page-executor-login': 1, 'page-executor-menu': 1, 'page-executor-region': 1, 'page-executor-changelog': 1,
@@ -2965,11 +3028,24 @@ function fitButtonLabels_() {
   });
 }
 
+function updateUiScale_() {
+  const root = document.documentElement;
+  const ar = parseFloat(root.style.getPropertyValue('--ar')) || 1.0391;
+  const frameH = Math.min(window.innerHeight, window.innerWidth / ar);
+  const s = Math.max(0.85, Math.min(1.7, frameH / 664));
+  root.style.setProperty('--ui-scale', s.toFixed(3));
+}
+window.addEventListener('resize', updateUiScale_);
+window.addEventListener('orientationchange', updateUiScale_);
+document.addEventListener('DOMContentLoaded', updateUiScale_);
+
 function applyBackdrop_(pageId) {
   const stage = document.getElementById('bg-stage');
   if (!stage) return;
   const lv = PAGE_LEVEL[pageId];
   if (lv) {
+    document.documentElement.style.setProperty('--ar', BG_ASPECT[lv]);
+    updateUiScale_();
     stage.querySelectorAll('.bg-layer').forEach(function(el) {
       el.classList.toggle('on', el.getAttribute('data-level') === String(lv));
     });
