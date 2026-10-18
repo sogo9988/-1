@@ -850,6 +850,7 @@ var BG_VERSION = '2';
 <div class="menu-grid">
   <button style="background:#00796B; color:white;" onclick="goToRegionManage()" data-i18n="exec_menu_region">空棧板／區域設定</button>
   <button style="background:#5D4037; color:white;" onclick="goToChangeLog()" data-i18n="exec_menu_changelog">所有異動明細</button>
+  <button style="background:#455A64; color:white;" onclick="goToInventoryAdmin()" data-i18n="exec_menu_inventory">庫存資料維護</button>
 <button onclick="executorLogout()" style="background:#666; color:white;" data-i18n="back_home">回首頁</button>
 </div>
 </div>
@@ -892,6 +893,38 @@ var BG_VERSION = '2';
 </table>
 </div>
 <br><button onclick="showPage('page-executor-menu')" style="background:#666; color:white;" data-i18n="back_home">回上一頁</button>
+</div>
+
+<!-- 2.4b 執行者專區：庫存資料維護頁（匯入／清除／還原） -->
+<div id="page-executor-inventory" class="page" style="text-align: center; margin-top: 40px;">
+<h3 data-i18n="inv_admin_title">📦 庫存資料維護</h3>
+<p id="inv-admin-stats" style="font-size:14px; color:#444; white-space:pre-line; margin:6px 0 14px;"></p>
+
+<div style="max-width:560px; margin:0 auto; text-align:left;">
+
+  <h4 data-i18n="inv_import_title">⬆️ 匯入庫存資料</h4>
+  <p style="font-size:13px; color:#666;" data-i18n="inv_import_hint">選擇 Excel（.xlsx／.xls）或 CSV 檔。第一列要有標題：庫別、料號、棧板號（必填），以及 SN、片數、入庫時間、USERS（SN 可留空；入庫時間不是日期的，會用匯入當下的時間）。</p>
+  <input type="file" id="inv-admin-file" accept=".xlsx,.xls,.csv" class="form-control" style="margin:8px 0;">
+  <label style="display:block; margin:6px 0; font-size:14px;"><input type="radio" name="inv-mode" value="replace" checked> <span data-i18n="inv_mode_replace">取代全部：先清空現有庫存，再匯入這份檔案（會自動備份）</span></label>
+  <label style="display:block; margin:6px 0; font-size:14px;"><input type="radio" name="inv-mode" value="append"> <span data-i18n="inv_mode_append">追加：保留現有庫存，把這份檔案的資料新增進去</span></label>
+  <div style="display:flex; gap:8px; flex-wrap:wrap; margin:10px 0;">
+    <button id="btn-inv-parse" class="btn-std" style="background:#2196F3; color:white;" onclick="parseInventoryFile()" data-i18n="btn_inv_parse">解析檔案</button>
+    <button id="btn-inv-import" class="btn-std" style="background:#D32F2F; color:white;" onclick="submitInventoryImport()" disabled data-i18n="btn_inv_import">確認匯入</button>
+  </div>
+  <div id="inv-admin-preview" style="font-size:13px; color:#333;"></div>
+
+  <hr style="margin:22px 0;">
+  <h4 data-i18n="inv_clear_title">🗑️ 清除全部庫存</h4>
+  <p style="font-size:13px; color:#666;" data-i18n="inv_clear_hint">刪除庫存總表的所有資料。動作前會自動備份，誤刪可以在下方還原。</p>
+  <button class="btn-std" style="background:#B71C1C; color:white;" onclick="submitInventoryClear()" data-i18n="btn_inv_clear">清除全部庫存</button>
+
+  <hr style="margin:22px 0;">
+  <h4 data-i18n="inv_restore_title">↩️ 還原</h4>
+  <p style="font-size:13px; color:#666;" data-i18n="inv_restore_hint">把庫存換回最近一次「清除／取代匯入／還原」之前的樣子。還原前會再備份目前狀態，所以按錯了也能再還原回來。</p>
+  <button id="btn-inv-restore" class="btn-std" style="background:#6A1B9A; color:white;" onclick="submitInventoryRestore()" disabled data-i18n="btn_inv_restore">還原到上次操作前</button>
+</div>
+
+<br><button onclick="showPage('page-executor-menu')" style="background:#666; color:white;" data-i18n="inv_back">回上一頁</button>
 </div>
 
 <!-- 2.5 入庫模式選擇頁 -->
@@ -1842,6 +1875,52 @@ const I18N = {
     exec_menu_title: "🔒 執行者專區",
     exec_menu_region: "空棧板／區域設定",
     exec_menu_changelog: "所有異動明細",
+    exec_menu_inventory: "庫存資料維護",
+    inv_back: "回上一頁",
+    inv_admin_title: "📦 庫存資料維護",
+    inv_admin_loading: "讀取中...",
+    inv_admin_stats: "目前庫存：{rows} 筆資料／合計 {qty} 片／{pallets} 個棧板",
+    inv_admin_backup: "可還原的備份：{time}（{rows} 筆，來源：{action}）",
+    inv_admin_nobackup: "目前沒有可還原的備份",
+    inv_import_title: "⬆️ 匯入庫存資料",
+    inv_import_hint: "選擇 Excel（.xlsx／.xls）或 CSV 檔。第一列要有標題：庫別、料號、棧板號（必填），以及 SN、片數、入庫時間、USERS（SN 可留空；入庫時間不是日期的，會用匯入當下的時間）。",
+    inv_mode_replace: "取代全部：先清空現有庫存，再匯入這份檔案（會自動備份）",
+    inv_mode_append: "追加：保留現有庫存，把這份檔案的資料新增進去",
+    btn_inv_parse: "解析檔案",
+    btn_inv_import: "確認匯入",
+    inv_preview_summary: "共讀到 {n} 筆，合計 {qty} 片（其中 {nosn} 筆沒有 SN）；略過資料不完整 {skipped} 筆。以下是前 5 筆：",
+    inv_col_wh: "庫別",
+    inv_col_part: "料號",
+    inv_col_sn: "SN",
+    inv_col_qty: "片數",
+    inv_col_pallet: "棧板號",
+    inv_col_time: "入庫時間",
+    inv_col_user: "USERS",
+    alert_inv_need_file: "請先選擇要匯入的檔案！",
+    alert_inv_need_parse: "請先按「解析檔案」確認內容！",
+    alert_inv_header: "【錯誤】找不到標題列。前 10 列內必須有「庫別、料號、棧板號」這三個欄位標題！",
+    alert_inv_empty: "【錯誤】沒有讀到任何有效資料（庫別、料號、棧板號都要有填）！",
+    alert_inv_too_many: "【錯誤】一次最多匯入 {max} 筆，這份檔案有 {n} 筆，請分次匯入！",
+    inv_confirm_replace: "確定要「取代全部」嗎？\n\n會先備份並清空目前所有庫存，再匯入 {n} 筆資料。",
+    inv_confirm_append: "確定要「追加」嗎？\n\n會保留現有庫存，另外新增 {n} 筆資料。",
+    inv_type_confirm: "這個動作會更動大量資料。請輸入「{word}」確認：",
+    inv_confirm_word: "確認",
+    inv_clear_word: "清除",
+    inv_cancelled: "已取消，庫存沒有被更動。",
+    inv_import_done: "匯入完成！\n匯入 {n} 筆（略過資料不完整 {skipped} 筆），目前庫存共 {total} 筆。",
+    inv_import_fail: "匯入失敗",
+    inv_clear_title: "🗑️ 清除全部庫存",
+    inv_clear_hint: "刪除庫存總表的所有資料。動作前會自動備份，誤刪可以在下方還原。",
+    btn_inv_clear: "清除全部庫存",
+    inv_clear_confirm: "確定要清除「全部」庫存嗎？\n\n（會先自動備份，可在本頁還原）",
+    inv_clear_done: "已清除 {n} 筆庫存。",
+    inv_clear_fail: "清除失敗",
+    inv_restore_title: "↩️ 還原",
+    inv_restore_hint: "把庫存換回最近一次「清除／取代匯入／還原」之前的樣子。還原前會再備份目前狀態，所以按錯了也能再還原回來。",
+    btn_inv_restore: "還原到上次操作前",
+    inv_restore_confirm: "確定要還原嗎？\n\n目前庫存會先備份，再換成備份內容。",
+    inv_restore_done: "已還原 {n} 筆庫存。",
+    inv_restore_fail: "還原失敗",
     exec_changelog_title: "📋 所有異動明細",
     exec_changelog_hint: "記錄刪除棧板、依SN刪除、發料、庫存異動、異動刪除等需要帳密驗證的動作（不含入庫），由新到舊排序，最多顯示 200 筆。",
     th_changelog_time: "時間",
@@ -2169,6 +2248,52 @@ const I18N = {
     exec_menu_title: "🔒 Executor Zone",
     exec_menu_region: "Empty Pallet / Region Settings",
     exec_menu_changelog: "All Change History",
+    exec_menu_inventory: "Inventory Data Maintenance",
+    inv_back: "Back",
+    inv_admin_title: "📦 Inventory Data Maintenance",
+    inv_admin_loading: "Loading...",
+    inv_admin_stats: "Current inventory: {rows} records / {qty} pcs in total / {pallets} pallets",
+    inv_admin_backup: "Restorable backup: {time} ({rows} records, from: {action})",
+    inv_admin_nobackup: "No backup available to restore",
+    inv_import_title: "⬆️ Import Inventory Data",
+    inv_import_hint: "Choose an Excel (.xlsx / .xls) or CSV file. The first row must be a header with Warehouse (庫別), Part No. (料號), Pallet (棧板號) — required — plus SN, Qty (片數), Inbound Time (入庫時間), USERS. SN may be empty; a time that is not a valid date is replaced by the import time.",
+    inv_mode_replace: "Replace all: clear the current inventory, then import this file (backed up automatically)",
+    inv_mode_append: "Append: keep the current inventory and add the rows in this file",
+    btn_inv_parse: "Parse File",
+    btn_inv_import: "Confirm Import",
+    inv_preview_summary: "Read {n} rows, {qty} pcs in total ({nosn} without SN); {skipped} incomplete rows skipped. First 5 rows:",
+    inv_col_wh: "Warehouse",
+    inv_col_part: "Part No.",
+    inv_col_sn: "SN",
+    inv_col_qty: "Qty",
+    inv_col_pallet: "Pallet",
+    inv_col_time: "Inbound Time",
+    inv_col_user: "USERS",
+    alert_inv_need_file: "Please choose a file to import first!",
+    alert_inv_need_parse: "Please click \"Parse File\" and check the content first!",
+    alert_inv_header: "[Error] Header row not found. The first 10 rows must contain the headers 庫別 (Warehouse), 料號 (Part No.) and 棧板號 (Pallet)!",
+    alert_inv_empty: "[Error] No valid rows found (Warehouse, Part No. and Pallet are all required)!",
+    alert_inv_too_many: "[Error] At most {max} rows can be imported at once; this file has {n}. Please import in several batches!",
+    inv_confirm_replace: "Replace ALL inventory?\n\nThe current inventory will be backed up and cleared, then {n} rows will be imported.",
+    inv_confirm_append: "Append rows?\n\nThe current inventory is kept and {n} rows will be added.",
+    inv_type_confirm: "This changes a large amount of data. Type \"{word}\" to confirm:",
+    inv_confirm_word: "CONFIRM",
+    inv_clear_word: "CLEAR",
+    inv_cancelled: "Cancelled. Inventory was not changed.",
+    inv_import_done: "Import complete!\nImported {n} rows ({skipped} incomplete rows skipped). Inventory now has {total} records.",
+    inv_import_fail: "Import failed",
+    inv_clear_title: "🗑️ Clear All Inventory",
+    inv_clear_hint: "Deletes everything in the inventory table. A backup is made first, so you can restore below if needed.",
+    btn_inv_clear: "Clear All Inventory",
+    inv_clear_confirm: "Clear ALL inventory?\n\n(A backup is made first and can be restored on this page.)",
+    inv_clear_done: "Cleared {n} inventory records.",
+    inv_clear_fail: "Clear failed",
+    inv_restore_title: "↩️ Restore",
+    inv_restore_hint: "Puts the inventory back to how it was before the latest clear / replace-import / restore. The current state is backed up first, so you can undo a mistaken restore too.",
+    btn_inv_restore: "Restore to Before Last Action",
+    inv_restore_confirm: "Restore the inventory?\n\nThe current inventory is backed up first, then replaced with the backup.",
+    inv_restore_done: "Restored {n} inventory records.",
+    inv_restore_fail: "Restore failed",
     exec_changelog_title: "📋 All Change History",
     exec_changelog_hint: "Logs actions requiring username/password (deleting pallets, deleting by SN, outbound, inventory adjustments, adjustment deletions) — inbound is not logged. Newest first, up to 200 records.",
     th_changelog_time: "Time",
@@ -2975,7 +3100,7 @@ let currentPageId = 'page-welcome';
 const BG_ASPECT = {1: 1.0391, 2: 1.1168, 3: 1.0, 4: 0.978, 5: 0.7467, 6: 0.7467, 7: 1.0573, 8: 1.0, 9: 0.8159};   // 各張圖的寬高比（寬÷高），換圖後要一起更新
 const PAGE_LEVEL = {
   // 第 1 張（lv1.webp）DOA 大門
-  'page-welcome': 1, 'page-executor-login': 1, 'page-executor-menu': 1, 'page-executor-region': 1, 'page-executor-changelog': 1,
+  'page-welcome': 1, 'page-executor-login': 1, 'page-executor-menu': 1, 'page-executor-region': 1, 'page-executor-changelog': 1, 'page-executor-inventory': 1,
   // 第 2 張（lv2.webp）火鍋
   'page-choice': 2, 'page-designated-menu': 2, 'page-designated-upload': 2, 'page-designated-scan': 2, 'page-success': 2,
   // 第 3 張（lv3.webp）烤肉
@@ -4531,6 +4656,209 @@ function goToRegionManage() {
   document.getElementById('exec-new-limit').value = '';
   showPage('page-executor-region');
   loadRegionManageList();
+}
+
+/* ============================================================
+ * 執行者專區：庫存資料維護（匯入／清除／還原）
+ * 帳密沿用執行者登入時輸入的那一組；後端會再驗證一次。
+ * ============================================================ */
+let invAdminRows = null;
+let invAdminSkipped = 0;       // 解析時就被略過（資料不完整）的筆數，匯入完成時一併告知
+const INV_ADMIN_MAX_ROWS = 50000;
+const INV_HEADER_ALIASES = {
+  warehouse: ['庫別', 'warehouse'],
+  partNo: ['料號', '料号', 'partno', 'part', 'part_no'],
+  sn: ['sn', '序號'],
+  qty: ['片數', '數量', 'qty', 'quantity'],
+  pallet: ['棧板號', '棧板', 'pallet', 'palletno', 'pallet_no'],
+  time: ['入庫時間', '時間', 'time', 'inbound_at'],
+  user: ['users', 'user', '帳號']
+};
+
+function normHeader_(v) { return String(v == null ? '' : v).trim().toLowerCase().replace(/[\s_]/g, ''); }
+
+function invCellText_(v) {
+  if (v instanceof Date && !isNaN(v.getTime())) {
+    const d = new Date(Math.round(v.getTime() / 1000) * 1000);
+    const p = function(n) { return String(n).padStart(2, '0'); };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' +
+           p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  }
+  return String(v == null ? '' : v).trim();
+}
+
+function goToInventoryAdmin() {
+  invAdminRows = null;
+  document.getElementById('inv-admin-file').value = '';
+  document.getElementById('inv-admin-preview').innerHTML = '';
+  document.getElementById('btn-inv-import').disabled = true;
+  showPage('page-executor-inventory');
+  loadInventoryAdminStats();
+}
+
+function loadInventoryAdminStats() {
+  const el = document.getElementById('inv-admin-stats');
+  const btnRestore = document.getElementById('btn-inv-restore');
+  el.innerText = tr('inv_admin_loading');
+  btnRestore.disabled = true;
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res.success) { el.innerText = res.msg || ''; return; }
+      let s = tr('inv_admin_stats', { rows: res.totalRows, qty: res.totalQty, pallets: res.palletCount });
+      if (res.backup) {
+        s += '\n' + tr('inv_admin_backup', { time: res.backup.time, rows: res.backup.rows, action: res.backup.action });
+        btnRestore.disabled = false;
+      } else {
+        s += '\n' + tr('inv_admin_nobackup');
+      }
+      el.innerText = s;
+    })
+    .withFailureHandler(function(err) { el.innerText = err.message; })
+    .adminInventoryStats(currentExecutorUser, currentExecutorPass);
+}
+
+async function parseInventoryFile() {
+  const input = document.getElementById('inv-admin-file');
+  const preview = document.getElementById('inv-admin-preview');
+  const btnParse = document.getElementById('btn-inv-parse');
+  const btnImport = document.getElementById('btn-inv-import');
+  invAdminRows = null;
+  btnImport.disabled = true;
+  preview.innerHTML = '';
+
+  if (!input.files || input.files.length === 0) { alert(tr('alert_inv_need_file')); return; }
+  btnParse.disabled = true;
+  try {
+    const file = input.files[0];
+    const buf = await readFileAsArrayBuffer(file);
+    const isCsv = /\.csv$/i.test(file.name);
+    // CSV：raw 讓棧板號、SN 不會被轉成數字（保留前面的 0）；codepage 65001 = UTF-8
+    const wb = XLSX.read(buf, isCsv ? { type: 'array', raw: true, codepage: 65001 } : { type: 'array', cellDates: true });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: true });
+
+    // 在前 10 列內找標題列（用欄位名稱對應，欄位順序不同也可以）
+    let hIdx = -1, col = {};
+    for (let r = 0; r < Math.min(rows.length, 10) && hIdx < 0; r++) {
+      const heads = (rows[r] || []).map(normHeader_);
+      const found = {};
+      Object.keys(INV_HEADER_ALIASES).forEach(function(k) {
+        const al = INV_HEADER_ALIASES[k].map(normHeader_);
+        const idx = heads.findIndex(function(h) { return al.indexOf(h) >= 0; });
+        if (idx >= 0) found[k] = idx;
+      });
+      if (found.warehouse !== undefined && found.partNo !== undefined && found.pallet !== undefined) { hIdx = r; col = found; }
+    }
+    if (hIdx < 0) throw new Error(tr('alert_inv_header'));
+
+    const list = [];
+    let skipped = 0, totalQty = 0, noSn = 0;
+    for (let i = hIdx + 1; i < rows.length; i++) {
+      const row = rows[i] || [];
+      const get = function(k) { return col[k] === undefined ? '' : row[col[k]]; };
+      const wh = invCellText_(get('warehouse')), pt = invCellText_(get('partNo')), pl = invCellText_(get('pallet'));
+      const sn = invCellText_(get('sn'));
+      if (!wh && !pt && !pl && !sn) continue;              // 完全空白的列
+      if (!wh || !pt || !pl) { skipped++; continue; }      // 庫別／料號／棧板號少一項
+      let qty = Math.round(Number(invCellText_(get('qty'))));
+      if (!qty || qty < 1) qty = 1;
+      list.push({ warehouse: wh, partNo: pt, sn: sn, qty: qty, pallet: pl,
+                  time: invCellText_(get('time')), user: invCellText_(get('user')) });
+      totalQty += qty;
+      if (!sn) noSn++;
+    }
+
+    if (list.length === 0) throw new Error(tr('alert_inv_empty'));
+    if (list.length > INV_ADMIN_MAX_ROWS) throw new Error(tr('alert_inv_too_many', { max: INV_ADMIN_MAX_ROWS, n: list.length }));
+
+    invAdminRows = list;
+    invAdminSkipped = skipped;
+    renderInventoryPreview_(list, { skipped: skipped, totalQty: totalQty, noSn: noSn });
+    btnImport.disabled = false;
+  } catch (e) {
+    alert(e.message || String(e));
+  } finally {
+    btnParse.disabled = false;
+  }
+}
+
+function renderInventoryPreview_(list, st) {
+  const box = document.getElementById('inv-admin-preview');
+  box.innerHTML = '';
+  const p = document.createElement('p');
+  p.style.fontWeight = 'bold';
+  p.textContent = tr('inv_preview_summary', { n: list.length, qty: st.totalQty, nosn: st.noSn, skipped: st.skipped });
+  box.appendChild(p);
+
+  const wrap = document.createElement('div');
+  wrap.className = 'scroll-result-box';
+  const table = document.createElement('table');
+  table.style.width = '100%';
+  const heads = ['inv_col_wh', 'inv_col_part', 'inv_col_sn', 'inv_col_qty', 'inv_col_pallet', 'inv_col_time', 'inv_col_user'];
+  const trh = document.createElement('tr');
+  heads.forEach(function(k) { const th = document.createElement('th'); th.textContent = tr(k); trh.appendChild(th); });
+  const thead = document.createElement('thead'); thead.appendChild(trh); table.appendChild(thead);
+  const tbody = document.createElement('tbody');
+  list.slice(0, 5).forEach(function(r) {
+    const tr_ = document.createElement('tr');
+    [r.warehouse, r.partNo, r.sn, r.qty, r.pallet, r.time, r.user].forEach(function(v) {
+      const td = document.createElement('td'); td.textContent = String(v); tr_.appendChild(td);
+    });
+    tbody.appendChild(tr_);
+  });
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+  box.appendChild(wrap);
+}
+
+function submitInventoryImport() {
+  if (!invAdminRows || invAdminRows.length === 0) { alert(tr('alert_inv_need_parse')); return; }
+  const mode = document.querySelector('input[name="inv-mode"]:checked').value;
+  const n = invAdminRows.length;
+  if (!confirm(tr(mode === 'replace' ? 'inv_confirm_replace' : 'inv_confirm_append', { n: n }))) return;
+  if (mode === 'replace') {
+    const typed = prompt(tr('inv_type_confirm', { word: tr('inv_confirm_word') }));
+    if (typed === null || typed.trim() !== tr('inv_confirm_word')) { alert(tr('inv_cancelled')); return; }
+  }
+  const btn = document.getElementById('btn-inv-import');
+  btn.disabled = true;
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res.success) { alert(res.msg || tr('inv_import_fail')); btn.disabled = false; return; }
+      alert(tr('inv_import_done', { n: res.imported, skipped: (res.skipped || 0) + invAdminSkipped, total: res.totalAfter }));
+      invAdminRows = null;
+      document.getElementById('inv-admin-file').value = '';
+      document.getElementById('inv-admin-preview').innerHTML = '';
+      loadInventoryAdminStats();
+    })
+    .withFailureHandler(function(err) { btn.disabled = false; alert(tr('inv_import_fail') + '：' + err.message); })
+    .adminImportInventory(invAdminRows, mode, currentExecutorUser, currentExecutorPass);
+}
+
+function submitInventoryClear() {
+  if (!confirm(tr('inv_clear_confirm'))) return;
+  const typed = prompt(tr('inv_type_confirm', { word: tr('inv_clear_word') }));
+  if (typed === null || typed.trim() !== tr('inv_clear_word')) { alert(tr('inv_cancelled')); return; }
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res.success) { alert(res.msg || tr('inv_clear_fail')); return; }
+      alert(tr('inv_clear_done', { n: res.deleted }));
+      loadInventoryAdminStats();
+    })
+    .withFailureHandler(function(err) { alert(tr('inv_clear_fail') + '：' + err.message); })
+    .adminClearInventory(currentExecutorUser, currentExecutorPass);
+}
+
+function submitInventoryRestore() {
+  if (!confirm(tr('inv_restore_confirm'))) return;
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res.success) { alert(res.msg || tr('inv_restore_fail')); return; }
+      alert(tr('inv_restore_done', { n: res.restored }));
+      loadInventoryAdminStats();
+    })
+    .withFailureHandler(function(err) { alert(tr('inv_restore_fail') + '：' + err.message); })
+    .adminRestoreInventory(currentExecutorUser, currentExecutorPass);
 }
 
 function goToChangeLog() {
