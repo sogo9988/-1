@@ -674,8 +674,10 @@ html { background: #3b2c1e; }
   .menu-box {
     margin-left: calc(var(--frame-l) + var(--frame-pad));
     margin-top: calc(var(--frame-t) + clamp(24px, 6vh, 64px));
-    transform: scale(var(--ui-scale, 1));       /* 選單文字與按鈕跟著圖一起放大縮小 */
-    transform-origin: top left;
+    /* 跟著圖一起縮放；--mdx / --mdy / --mscale 是執行者在「畫面設定」調整的偏移與大小（沒調整時是 0、0、1，位置與預設完全相同） */
+    transform: translate(calc(var(--mdx, 0) * var(--frame-w)), calc(var(--mdy, 0) * var(--frame-h)))
+               scale(calc(var(--ui-scale, 1) * var(--mscale, 1)));
+    transform-origin: top var(--mox, left);
   }
 
   /* 首頁：標題與按鈕置中，放在「入庫／發料／盤點」招牌下方的門板上 */
@@ -717,6 +719,40 @@ html { background: #3b2c1e; }
     transform-origin: top right;
   }
 }
+
+/* ============================================================
+ * 畫面設定：手機直式的選單微調（偏移以螢幕寬高的比例計算），以及設定頁的樣式
+ * ============================================================ */
+@media (max-aspect-ratio: 1/1) {
+  .menu-box {
+    transform: translate(calc(var(--mdx, 0) * 100vw), calc(var(--mdy, 0) * 100lvh)) scale(var(--mscale, 1));
+    transform-origin: top var(--mox, left);
+  }
+}
+.ap-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin: 10px 0; }
+.ap-slot { border: 1px solid #ccc; border-radius: 10px; padding: 6px; background: #fff; text-align: center; font-size: 13px; }
+.ap-thumb { width: 100%; height: 84px; object-fit: cover; border-radius: 6px; background: #ddd; display: block; margin-bottom: 4px; }
+.ap-slot button { margin-top: 4px; padding: 4px 8px; font-size: 12px; }
+.ap-row { display: flex; align-items: center; gap: 8px; padding: 7px 4px; border-bottom: 1px solid #e3e3e3; font-size: 14px; }
+.ap-row .ap-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ap-row .ap-bg { color: #666; font-size: 12px; white-space: nowrap; }
+.ap-badge { background: #FFF3E0; color: #E65100; border-radius: 8px; padding: 1px 7px; font-size: 11px; white-space: nowrap; }
+.ap-row button { padding: 4px 12px; font-size: 13px; }
+#ap-editbar {
+  position: fixed; left: 50%; bottom: 10px; transform: translateX(-50%);
+  width: min(560px, 96vw); z-index: 10000; box-sizing: border-box;
+  background: rgba(255,255,255,.97); border-radius: 12px; padding: 10px 12px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.35); font-size: 13px; color: #222; text-align: left;
+}
+#ap-editbar.top { bottom: auto; top: 10px; }
+#ap-editbar .ap-edit-title { font-weight: bold; margin-bottom: 6px; }
+#ap-editbar .ap-edit-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+#ap-editbar .ap-edit-row label { width: 56px; flex: none; }
+#ap-editbar .ap-edit-row input[type=range] { flex: 1; min-width: 0; }
+#ap-editbar .ap-edit-row select { flex: 1; min-width: 0; padding: 3px; }
+#ap-editbar .ap-edit-row span { width: 48px; text-align: right; flex: none; }
+#ap-editbar .ap-edit-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+#ap-editbar .ap-edit-actions button { padding: 6px 12px; font-size: 13px; }
 
 /* ============================================================
  * 表單頁按鈕（維持原本的統一尺寸）：同一種按鈕高度、字級、圓角一致，
@@ -766,14 +802,29 @@ button:focus-visible {
    換圖之後如果畫面還是舊圖，把 BG_VERSION 加 1 */
 var BG_BASE = '';
 var BG_VERSION = '2';
+/* 執行者在「背景圖與畫面設定」上傳過的圖，會存在資料庫並快取在這台裝置，
+   開啟網頁時先用快取的設定（不用等網路），之後再向資料庫確認有沒有更新。 */
+var UI_SETTINGS = (function () {
+  try { return JSON.parse(localStorage.getItem('k01_ui_settings') || 'null') || {}; } catch (e) { return {}; }
+})();
+function bgSlotUrl_(n) {
+  var im = UI_SETTINGS.images && UI_SETTINGS.images[n];
+  return (im && im.url) ? im.url : (BG_BASE + 'lv' + n + '.webp?v=' + BG_VERSION);
+}
+function bgSlotCount_() {
+  var m = 9;
+  if (UI_SETTINGS.images) Object.keys(UI_SETTINGS.images).forEach(function (k) {
+    var n = parseInt(k, 10); if (n > m) m = n;
+  });
+  return m;
+}
 (function () {
-  function url(n) { return BG_BASE + 'lv' + n + '.webp?v=' + BG_VERSION; }
-  for (var n = 1; n <= 9; n++) {
-    document.documentElement.style.setProperty('--bg-lv' + n, 'url("' + url(n) + '")');
+  for (var n = 1; n <= bgSlotCount_(); n++) {
+    document.documentElement.style.setProperty('--bg-lv' + n, 'url("' + bgSlotUrl_(n) + '")');
   }
   // 頁面載入完成後，把其他層級的圖先抓進快取，換頁時背景才不會慢半拍
   window.addEventListener('load', function () {
-    for (var n = 1; n <= 9; n++) { var im = new Image(); im.src = url(n); }
+    for (var n = 1; n <= bgSlotCount_(); n++) { var im = new Image(); im.src = bgSlotUrl_(n); }
   });
 })();
 </script>
@@ -851,6 +902,7 @@ var BG_VERSION = '2';
   <button style="background:#00796B; color:white;" onclick="goToRegionManage()" data-i18n="exec_menu_region">空棧板／區域設定</button>
   <button style="background:#5D4037; color:white;" onclick="goToChangeLog()" data-i18n="exec_menu_changelog">所有異動明細</button>
   <button style="background:#455A64; color:white;" onclick="goToInventoryAdmin()" data-i18n="exec_menu_inventory">庫存資料維護</button>
+  <button style="background:#00695C; color:white;" onclick="goToAppearance()" data-i18n="exec_menu_appearance">背景圖與畫面設定</button>
 <button onclick="executorLogout()" style="background:#666; color:white;" data-i18n="back_home">回首頁</button>
 </div>
 </div>
@@ -925,6 +977,52 @@ var BG_VERSION = '2';
 </div>
 
 <br><button onclick="showPage('page-executor-menu')" style="background:#666; color:white;" data-i18n="inv_back">回上一頁</button>
+</div>
+
+<!-- 2.4c 執行者專區：背景圖與畫面設定頁 -->
+<div id="page-executor-appearance" class="page" style="text-align: center; margin-top: 40px;">
+<h3 data-i18n="ap_title">🎨 背景圖與畫面設定</h3>
+<p style="font-size:13px; color:#666; max-width:560px; margin:6px auto 12px;" data-i18n="ap_intro">這裡的設定會存在資料庫，所有人開啟網頁都會套用。沒有調整過的地方，維持程式內建的預設。</p>
+<p id="ap-status" style="font-size:14px; color:#00695C; min-height:20px; margin:4px 0;"></p>
+
+<div style="max-width:620px; margin:0 auto; text-align:left;">
+  <h4 data-i18n="ap_slots_title">🖼️ 圖片庫</h4>
+  <p style="font-size:13px; color:#666;" data-i18n="ap_slots_hint">每個畫面從這裡挑一張當背景。點「更換圖片」上傳新圖，會自動轉成 WebP 並縮到最長邊 1600 像素。</p>
+  <div id="ap-slots" class="ap-slots"></div>
+  <input type="file" id="ap-file" accept="image/*" style="display:none;" onchange="apOnFileChosen(this)">
+
+  <hr style="margin:20px 0;">
+  <h4 data-i18n="ap_pages_title">🧭 各畫面設定</h4>
+  <p style="font-size:13px; color:#666;" data-i18n="ap_pages_hint">點「調整」會直接進到該畫面，用底下的調整列換背景圖、移動或縮放選單按鈕。電腦橫式和手機直式要分開各調一次（把視窗拉寬或轉向就會切換）。</p>
+  <div id="ap-pages"></div>
+
+  <hr style="margin:20px 0;">
+  <h4 data-i18n="ap_reset_title">↩️ 還原預設</h4>
+  <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-start;">
+    <button class="btn-std" style="background:#F57C00; color:white;" onclick="apResetAll('pages')" data-i18n="ap_reset_pages">還原所有畫面的設定（背景圖分配與選單位置）</button>
+    <button class="btn-std" style="background:#B71C1C; color:white;" onclick="apResetAll('all')" data-i18n="ap_reset_all">全部還原（含上傳過的圖片，回到程式內建的 9 張）</button>
+  </div>
+</div>
+
+<br><button onclick="showPage('page-executor-menu')" style="background:#666; color:white;" data-i18n="inv_back">回上一頁</button>
+</div>
+
+<!-- 調整列：在實際畫面上調整背景圖與選單位置時顯示 -->
+<div id="ap-editbar" style="display:none;">
+  <div class="ap-edit-title" id="ap-edit-title"></div>
+  <div class="ap-edit-row"><label data-i18n="ap_edit_bg">背景圖</label><select id="ap-edit-slot" onchange="apEditSlotChange()"></select></div>
+  <div id="ap-edit-menu">
+    <div class="ap-edit-row"><label data-i18n="ap_edit_x">左右</label><input type="range" id="ap-edit-dx" min="-0.5" max="0.5" step="0.005" oninput="apEditInput()"><span id="ap-edit-dx-v"></span></div>
+    <div class="ap-edit-row"><label data-i18n="ap_edit_y">上下</label><input type="range" id="ap-edit-dy" min="-0.5" max="0.9" step="0.005" oninput="apEditInput()"><span id="ap-edit-dy-v"></span></div>
+    <div class="ap-edit-row"><label data-i18n="ap_edit_s">大小</label><input type="range" id="ap-edit-s" min="0.5" max="2" step="0.05" oninput="apEditInput()"><span id="ap-edit-s-v"></span></div>
+  </div>
+  <div id="ap-edit-nomenu" style="color:#666; margin:4px 0;" data-i18n="ap_edit_nomenu">這個畫面沒有選單按鈕，只能換背景圖。</div>
+  <div class="ap-edit-actions">
+    <button style="background:#2E7D32; color:white;" onclick="apSaveEdit()" data-i18n="ap_edit_save">儲存</button>
+    <button style="background:#F57C00; color:white;" onclick="apResetEditPage()" data-i18n="ap_edit_reset">這個畫面還原預設</button>
+    <button style="background:#666; color:white;" onclick="apCancelEdit()" data-i18n="ap_edit_cancel">取消</button>
+    <button style="background:#90A4AE; color:white;" onclick="apToggleDock()" data-i18n="ap_edit_dock">調整列移到上方／下方</button>
+  </div>
 </div>
 
 <!-- 2.5 入庫模式選擇頁 -->
@@ -1876,6 +1974,43 @@ const I18N = {
     exec_menu_region: "空棧板／區域設定",
     exec_menu_changelog: "所有異動明細",
     exec_menu_inventory: "庫存資料維護",
+    exec_menu_appearance: "背景圖與畫面設定",
+    ap_title: "🎨 背景圖與畫面設定",
+    ap_intro: "這裡的設定會存在資料庫，所有人開啟網頁都會套用。沒有調整過的地方，維持程式內建的預設。",
+    ap_slots_title: "🖼️ 圖片庫",
+    ap_slots_hint: "每個畫面從這裡挑一張當背景。點「更換圖片」上傳新圖，會自動轉成 WebP 並縮到最長邊 1600 像素。",
+    ap_slot_label: "第 {n} 張",
+    ap_btn_replace: "更換圖片",
+    ap_btn_add: "＋ 新增圖片",
+    ap_pages_title: "🧭 各畫面設定",
+    ap_pages_hint: "點「調整」會直接進到該畫面，用底下的調整列換背景圖、移動或縮放選單按鈕。電腦橫式和手機直式要分開各調一次（把視窗拉寬或轉向就會切換）。",
+    ap_btn_adjust: "調整",
+    ap_customized: "已自訂",
+    ap_reset_title: "↩️ 還原預設",
+    ap_reset_pages: "還原所有畫面的設定（背景圖分配與選單位置）",
+    ap_reset_all: "全部還原（含上傳過的圖片，回到程式內建的 9 張）",
+    ap_reset_pages_confirm: "確定要還原所有畫面的背景圖分配與選單位置嗎？（上傳過的圖片會保留）",
+    ap_reset_all_confirm: "確定要全部還原嗎？\n\n上傳過的圖片也會移除，回到程式內建的 9 張圖。",
+    ap_status_converting: "轉換圖片中...",
+    ap_status_uploading: "上傳中...",
+    ap_status_done: "已更新！",
+    ap_saved: "已儲存！",
+    ap_save_fail: "儲存失敗",
+    ap_confirm_upload: "要用這張圖取代「第 {slot} 張」嗎？\n\n轉換後：{type}，{w}×{h}，約 {kb} KB",
+    ap_err_decode: "讀不到這個圖片檔，請換一個檔案（建議 JPG／PNG／WebP）。",
+    ap_err_toomany: "圖片最多 {max} 張。",
+    ap_edit_title: "調整：{page}（{orient}）",
+    ap_orient_l: "電腦橫式",
+    ap_orient_p: "手機直式",
+    ap_edit_bg: "背景圖",
+    ap_edit_x: "左右",
+    ap_edit_y: "上下",
+    ap_edit_s: "大小",
+    ap_edit_nomenu: "這個畫面沒有選單按鈕，只能換背景圖。",
+    ap_edit_save: "儲存",
+    ap_edit_reset: "這個畫面還原預設",
+    ap_edit_cancel: "取消",
+    ap_edit_dock: "調整列移到上方／下方",
     inv_back: "回上一頁",
     inv_admin_title: "📦 庫存資料維護",
     inv_admin_loading: "讀取中...",
@@ -2249,6 +2384,43 @@ const I18N = {
     exec_menu_region: "Empty Pallet / Region Settings",
     exec_menu_changelog: "All Change History",
     exec_menu_inventory: "Inventory Data Maintenance",
+    exec_menu_appearance: "Backgrounds & Layout",
+    ap_title: "🎨 Backgrounds & Layout",
+    ap_intro: "These settings are saved in the database and apply for everyone who opens the site. Anything you do not change keeps the built-in default.",
+    ap_slots_title: "🖼️ Image Library",
+    ap_slots_hint: "Pick one image per screen from here. \"Replace image\" uploads a new picture, converted to WebP and scaled to at most 1600 px on the long side.",
+    ap_slot_label: "Image {n}",
+    ap_btn_replace: "Replace image",
+    ap_btn_add: "+ Add image",
+    ap_pages_title: "🧭 Screen Settings",
+    ap_pages_hint: "\"Adjust\" opens that screen with an adjustment bar for changing its background and moving or resizing the menu buttons. Landscape (desktop) and portrait (phone) layouts are set separately — resize or rotate the window to switch.",
+    ap_btn_adjust: "Adjust",
+    ap_customized: "Customized",
+    ap_reset_title: "↩️ Restore Defaults",
+    ap_reset_pages: "Restore all screen settings (background choice and menu position)",
+    ap_reset_all: "Restore everything (also removes uploaded images, back to the built-in 9)",
+    ap_reset_pages_confirm: "Restore the background choice and menu position of all screens? (Uploaded images are kept.)",
+    ap_reset_all_confirm: "Restore everything?\n\nUploaded images are removed too, back to the 9 built-in images.",
+    ap_status_converting: "Converting image...",
+    ap_status_uploading: "Uploading...",
+    ap_status_done: "Updated!",
+    ap_saved: "Saved!",
+    ap_save_fail: "Save failed",
+    ap_confirm_upload: "Replace \"Image {slot}\" with this picture?\n\nAfter conversion: {type}, {w}×{h}, about {kb} KB",
+    ap_err_decode: "This image file cannot be read. Please choose another one (JPG / PNG / WebP recommended).",
+    ap_err_toomany: "At most {max} images.",
+    ap_edit_title: "Adjusting: {page} ({orient})",
+    ap_orient_l: "desktop / landscape",
+    ap_orient_p: "phone / portrait",
+    ap_edit_bg: "Background",
+    ap_edit_x: "Left/Right",
+    ap_edit_y: "Up/Down",
+    ap_edit_s: "Size",
+    ap_edit_nomenu: "This screen has no menu buttons; only its background can be changed.",
+    ap_edit_save: "Save",
+    ap_edit_reset: "Restore this screen",
+    ap_edit_cancel: "Cancel",
+    ap_edit_dock: "Move bar to top / bottom",
     inv_back: "Back",
     inv_admin_title: "📦 Inventory Data Maintenance",
     inv_admin_loading: "Loading...",
@@ -3098,9 +3270,10 @@ let currentPageId = 'page-welcome';
  * （沒補的頁面會沿用目前背景）。
  * ============================================================ */
 const BG_ASPECT = {1: 1.0391, 2: 1.1168, 3: 1.0, 4: 0.978, 5: 0.7467, 6: 0.7467, 7: 1.0573, 8: 1.0, 9: 0.8159};   // 各張圖的寬高比（寬÷高），換圖後要一起更新
+var editState = null;   // 「畫面設定」調整中的暫存狀態（null＝沒有在調整）
 const PAGE_LEVEL = {
   // 第 1 張（lv1.webp）DOA 大門
-  'page-welcome': 1, 'page-executor-login': 1, 'page-executor-menu': 1, 'page-executor-region': 1, 'page-executor-changelog': 1, 'page-executor-inventory': 1,
+  'page-welcome': 1, 'page-executor-login': 1, 'page-executor-menu': 1, 'page-executor-region': 1, 'page-executor-changelog': 1, 'page-executor-inventory': 1, 'page-executor-appearance': 1,
   // 第 2 張（lv2.webp）火鍋
   'page-choice': 2, 'page-designated-menu': 2, 'page-designated-upload': 2, 'page-designated-scan': 2, 'page-success': 2,
   // 第 3 張（lv3.webp）烤肉
@@ -3167,9 +3340,10 @@ document.addEventListener('DOMContentLoaded', updateUiScale_);
 function applyBackdrop_(pageId) {
   const stage = document.getElementById('bg-stage');
   if (!stage) return;
-  const lv = PAGE_LEVEL[pageId];
+  const lv = levelFor_(pageId);
   if (lv) {
-    document.documentElement.style.setProperty('--ar', BG_ASPECT[lv]);
+    ensureLayer_(lv);
+    document.documentElement.style.setProperty('--ar', aspectFor_(lv));
     updateUiScale_();
     stage.querySelectorAll('.bg-layer').forEach(function(el) {
       el.classList.toggle('on', el.getAttribute('data-level') === String(lv));
@@ -3183,6 +3357,7 @@ function applyBackdrop_(pageId) {
 
 function showPage(pageId, opts) {
   opts = opts || {};
+  if (editState && editState.pageId !== pageId) apAbortEdit_();   // 離開正在調整的畫面就結束調整
   if (!opts.skipHistory && pageId !== currentPageId) {
     navHistory.push(currentPageId);
   }
@@ -3190,6 +3365,7 @@ function showPage(pageId, opts) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(pageId).classList.add('active');
   applyBackdrop_(pageId);
+  applyMenuSettings_(pageId);
   window.scrollTo(0, 0);
 }
 
@@ -4656,6 +4832,346 @@ function goToRegionManage() {
   document.getElementById('exec-new-limit').value = '';
   showPage('page-executor-region');
   loadRegionManageList();
+}
+
+/* ============================================================
+ * 畫面設定：背景圖與選單位置（執行者專區可調整）
+ * 設定存在資料庫，所有人開啟網頁都會套用；沒有任何設定時＝程式內建的預設。
+ *   UI_SETTINGS.images    上傳過的圖片（第幾張 → 網址、寬高比）
+ *   UI_SETTINGS.pageImage 各畫面改用第幾張圖（沒列＝PAGE_LEVEL 的預設）
+ *   UI_SETTINGS.menu      各畫面選單的位置／大小微調（l＝電腦橫式、p＝手機直式；dx/dy 是比例、s 是倍率）
+ * ============================================================ */
+var AP_MAX_SLOTS = 40;
+var apUploadSlot = 0;
+
+function levelFor_(pageId) {
+  if (editState && editState.pageId === pageId && editState.slot) return editState.slot;
+  const o = UI_SETTINGS.pageImage && UI_SETTINGS.pageImage[pageId];
+  return o || PAGE_LEVEL[pageId];
+}
+function aspectFor_(n) {
+  const im = UI_SETTINGS.images && UI_SETTINGS.images[n];
+  return (im && im.ar) || BG_ASPECT[n] || 1;
+}
+// 第 10 張以後的圖沒有預先寫在網頁裡，用到時才建立圖層
+function ensureLayer_(n) {
+  const stage = document.getElementById('bg-stage');
+  let el = stage.querySelector('.bg-layer[data-level="' + n + '"]');
+  if (!el) {
+    document.documentElement.style.setProperty('--bg-lv' + n, 'url("' + bgSlotUrl_(n) + '")');
+    el = document.createElement('div');
+    el.className = 'bg-layer';
+    el.setAttribute('data-level', String(n));
+    el.style.backgroundImage = 'var(--bg-lv' + n + ')';
+    el.style.setProperty('--img', 'var(--bg-lv' + n + ')');
+    stage.insertBefore(el, document.getElementById('bg-veil'));
+  }
+  return el;
+}
+function applyImageVars_() {
+  for (let i = 1; i <= bgSlotCount_(); i++) {
+    document.documentElement.style.setProperty('--bg-lv' + i, 'url("' + bgSlotUrl_(i) + '")');
+    const im = new Image(); im.src = bgSlotUrl_(i);
+  }
+}
+function orient_() { return window.matchMedia('(min-aspect-ratio: 1/1)').matches ? 'l' : 'p'; }
+
+function applyMenuSettings_(pageId) {
+  const root = document.documentElement;
+  const m = (editState && editState.pageId === pageId) ? editState.menu : (UI_SETTINGS.menu && UI_SETTINGS.menu[pageId]);
+  const o = m && m[orient_()];
+  root.style.setProperty('--mdx', o ? o.dx : 0);
+  root.style.setProperty('--mdy', o ? o.dy : 0);
+  root.style.setProperty('--mscale', o ? o.s : 1);
+  const pageEl = document.getElementById(pageId);
+  if (pageEl && pageEl.classList.contains('page-menu')) {
+    const ai = getComputedStyle(pageEl).alignItems;
+    root.style.setProperty('--mox', ai === 'flex-end' ? 'right' : (ai === 'center' ? 'center' : 'left'));
+  }
+}
+function applyUiSettings_() {
+  applyImageVars_();
+  applyBackdrop_(currentPageId);
+  applyMenuSettings_(currentPageId);
+}
+function setUiSettings_(s) {
+  UI_SETTINGS = s || {};
+  try { localStorage.setItem('k01_ui_settings', JSON.stringify(UI_SETTINGS)); } catch (e) {}
+  applyUiSettings_();
+  const ap = document.getElementById('page-executor-appearance');
+  if (ap && ap.classList.contains('active')) renderAppearance_();
+}
+function refreshUiSettings_() {
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res || !res.success) return;
+      const s = res.settings || {};
+      if (Object.keys(UI_SETTINGS).length && (s.v || 0) === (UI_SETTINGS.v || 0)) return;   // 沒有更新
+      setUiSettings_(s);
+    })
+    .withFailureHandler(function() {})
+    .getUiSettings();
+}
+document.addEventListener('DOMContentLoaded', function() {
+  applyUiSettings_();
+  refreshUiSettings_();
+});
+window.addEventListener('resize', function() {
+  applyMenuSettings_(currentPageId);
+  if (editState) apRenderEditBar_();
+});
+
+function pageTitle_(id) {
+  const el = document.getElementById(id);
+  const h = el && el.querySelector('h1, h2, h3');
+  const s = h ? h.textContent.replace(/\s+/g, ' ').trim() : '';
+  return s || id;
+}
+function apSetStatus_(msg) { document.getElementById('ap-status').innerText = msg || ''; }
+function apEl_(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+function goToAppearance() {
+  apSetStatus_('');
+  showPage('page-executor-appearance');
+  renderAppearance_();
+}
+
+function renderAppearance_() {
+  // 圖片庫
+  const grid = document.getElementById('ap-slots');
+  grid.innerHTML = '';
+  const count = bgSlotCount_();
+  for (let n = 1; n <= count; n++) {
+    const card = apEl_('div', 'ap-slot');
+    const img = document.createElement('img');
+    img.className = 'ap-thumb';
+    img.src = bgSlotUrl_(n);
+    img.alt = '';
+    card.appendChild(img);
+    card.appendChild(apEl_('div', '', tr('ap_slot_label', { n: n })));
+    const b = apEl_('button', '', tr('ap_btn_replace'));
+    b.style.background = '#2196F3'; b.style.color = 'white';
+    b.onclick = function() { apPickImage(n); };
+    card.appendChild(b);
+    grid.appendChild(card);
+  }
+  if (count < AP_MAX_SLOTS) {
+    const card = apEl_('div', 'ap-slot');
+    card.style.display = 'flex'; card.style.alignItems = 'center'; card.style.justifyContent = 'center';
+    const b = apEl_('button', '', tr('ap_btn_add'));
+    b.style.background = '#2E7D32'; b.style.color = 'white';
+    b.onclick = function() { apPickImage(count + 1); };
+    card.appendChild(b);
+    grid.appendChild(card);
+  }
+
+  // 各畫面
+  const list = document.getElementById('ap-pages');
+  list.innerHTML = '';
+  document.querySelectorAll('.page').forEach(function(pageEl) {
+    const pid = pageEl.id;
+    if (pid === 'page-executor-appearance') return;
+    const row = apEl_('div', 'ap-row');
+    row.appendChild(apEl_('span', 'ap-name', pageTitle_(pid)));
+    const lv = (UI_SETTINGS.pageImage && UI_SETTINGS.pageImage[pid]) || PAGE_LEVEL[pid];
+    row.appendChild(apEl_('span', 'ap-bg', tr('ap_slot_label', { n: lv })));
+    const custom = (UI_SETTINGS.pageImage && UI_SETTINGS.pageImage[pid]) || (UI_SETTINGS.menu && UI_SETTINGS.menu[pid]);
+    if (custom) row.appendChild(apEl_('span', 'ap-badge', tr('ap_customized')));
+    const b = apEl_('button', '', tr('ap_btn_adjust'));
+    b.style.background = '#00695C'; b.style.color = 'white';
+    b.onclick = function() { startPageEdit(pid); };
+    row.appendChild(b);
+    list.appendChild(row);
+  });
+}
+
+/* ---------- 上傳／更換圖片（先在瀏覽器轉成 WebP 並縮小） ---------- */
+function apPickImage(slot) {
+  if (slot > AP_MAX_SLOTS) { alert(tr('ap_err_toomany', { max: AP_MAX_SLOTS })); return; }
+  apUploadSlot = slot;
+  const f = document.getElementById('ap-file');
+  f.value = '';
+  f.click();
+}
+
+async function imageToWebp_(file, maxSide) {
+  let bmp;
+  try { bmp = await createImageBitmap(file, { imageOrientation: 'from-image' }); }
+  catch (e) { bmp = await createImageBitmap(file); }
+  const sc = Math.min(1, maxSide / Math.max(bmp.width, bmp.height));
+  const w = Math.round(bmp.width * sc), h = Math.round(bmp.height * sc);
+  const cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  cv.getContext('2d').drawImage(bmp, 0, 0, w, h);
+  let blob = null;
+  const qualities = [0.82, 0.7, 0.55];
+  for (let i = 0; i < qualities.length; i++) {
+    blob = await new Promise(function(r) { cv.toBlob(r, 'image/webp', qualities[i]); });
+    if (!blob || blob.type !== 'image/webp') {            // 有些瀏覽器（例如 Safari）不能輸出 WebP，退而求其次用 JPEG
+      blob = await new Promise(function(r) { cv.toBlob(r, 'image/jpeg', 0.85); });
+      break;
+    }
+    if (blob.size <= 1200 * 1024) break;                  // 夠小就停，不夠小再降品質
+  }
+  const base64 = await new Promise(function(resolve, reject) {
+    const fr = new FileReader();
+    fr.onload = function() { resolve(String(fr.result).split(',')[1]); };
+    fr.onerror = reject;
+    fr.readAsDataURL(blob);
+  });
+  return { mime: blob.type, base64: base64, w: w, h: h, bytes: blob.size };
+}
+
+async function apOnFileChosen(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const slot = apUploadSlot;
+  try {
+    apSetStatus_(tr('ap_status_converting'));
+    const out = await imageToWebp_(file, 1600);
+    const ar = Math.round(out.w / out.h * 10000) / 10000;
+    if (!confirm(tr('ap_confirm_upload', { slot: slot, type: out.mime.replace('image/', '').toUpperCase(), w: out.w, h: out.h, kb: Math.round(out.bytes / 1024) }))) {
+      apSetStatus_('');
+      return;
+    }
+    apSetStatus_(tr('ap_status_uploading'));
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (!res.success) { apSetStatus_(''); alert(res.msg || tr('ap_save_fail')); return; }
+        setUiSettings_(res.settings);
+        apSetStatus_(tr('ap_status_done'));
+      })
+      .withFailureHandler(function(err) { apSetStatus_(''); alert(tr('ap_save_fail') + '：' + err.message); })
+      .adminUploadBackground(slot, out.mime, out.base64, ar, currentExecutorUser, currentExecutorPass);
+  } catch (e) {
+    apSetStatus_('');
+    alert(tr('ap_err_decode'));
+  }
+}
+
+/* ---------- 在實際畫面上調整：換背景圖、移動／縮放選單 ---------- */
+function startPageEdit(pageId) {
+  const cur = (UI_SETTINGS.pageImage && UI_SETTINGS.pageImage[pageId]) || PAGE_LEVEL[pageId];
+  const menu = JSON.parse(JSON.stringify((UI_SETTINGS.menu && UI_SETTINGS.menu[pageId]) || {}));
+  editState = { pageId: pageId, slot: cur, menu: menu };
+  showPage(pageId);
+  apRenderEditBar_();
+  document.getElementById('ap-editbar').style.display = 'block';
+}
+
+function apRenderEditBar_() {
+  if (!editState) return;
+  const e = editState;
+  const o = orient_();
+  document.getElementById('ap-edit-title').innerText =
+    tr('ap_edit_title', { page: pageTitle_(e.pageId), orient: tr(o === 'l' ? 'ap_orient_l' : 'ap_orient_p') });
+  const sel = document.getElementById('ap-edit-slot');
+  sel.innerHTML = '';
+  for (let n = 1; n <= bgSlotCount_(); n++) {
+    const op = document.createElement('option');
+    op.value = String(n); op.textContent = tr('ap_slot_label', { n: n });
+    sel.appendChild(op);
+  }
+  sel.value = String(e.slot);
+  const isMenu = document.getElementById(e.pageId).classList.contains('page-menu');
+  document.getElementById('ap-edit-menu').style.display = isMenu ? 'block' : 'none';
+  document.getElementById('ap-edit-nomenu').style.display = isMenu ? 'none' : 'block';
+  const m = e.menu[o] || { dx: 0, dy: 0, s: 1 };
+  document.getElementById('ap-edit-dx').value = m.dx;
+  document.getElementById('ap-edit-dy').value = m.dy;
+  document.getElementById('ap-edit-s').value = m.s;
+  apUpdateEditLabels_();
+}
+function apUpdateEditLabels_() {
+  document.getElementById('ap-edit-dx-v').innerText = Math.round(document.getElementById('ap-edit-dx').value * 100) + '%';
+  document.getElementById('ap-edit-dy-v').innerText = Math.round(document.getElementById('ap-edit-dy').value * 100) + '%';
+  document.getElementById('ap-edit-s-v').innerText = Math.round(document.getElementById('ap-edit-s').value * 100) + '%';
+}
+function apEditInput() {
+  if (!editState) return;
+  editState.menu[orient_()] = {
+    dx: parseFloat(document.getElementById('ap-edit-dx').value),
+    dy: parseFloat(document.getElementById('ap-edit-dy').value),
+    s: parseFloat(document.getElementById('ap-edit-s').value)
+  };
+  applyMenuSettings_(editState.pageId);
+  apUpdateEditLabels_();
+}
+function apEditSlotChange() {
+  if (!editState) return;
+  editState.slot = parseInt(document.getElementById('ap-edit-slot').value, 10);
+  applyBackdrop_(editState.pageId);
+}
+function apToggleDock() { document.getElementById('ap-editbar').classList.toggle('top'); }
+
+function apResetEditPage() {
+  if (!editState) return;
+  editState.slot = PAGE_LEVEL[editState.pageId];
+  editState.menu = {};
+  applyBackdrop_(editState.pageId);
+  applyMenuSettings_(editState.pageId);
+  apRenderEditBar_();
+}
+
+// 只留下「跟預設不同」的設定（全是預設就不存）
+function apNormalizeMenu_(menu) {
+  const out = {};
+  ['l', 'p'].forEach(function(k) {
+    const m = menu[k];
+    if (m && (Math.abs(m.dx) > 0.0005 || Math.abs(m.dy) > 0.0005 || Math.abs(m.s - 1) > 0.0005)) {
+      out[k] = { dx: Math.round(m.dx * 1000) / 1000, dy: Math.round(m.dy * 1000) / 1000, s: Math.round(m.s * 100) / 100 };
+    }
+  });
+  return Object.keys(out).length ? out : null;
+}
+
+// 結束調整（不儲存），回到設定頁
+function apAbortEdit_() {
+  editState = null;
+  document.getElementById('ap-editbar').style.display = 'none';
+  document.getElementById('ap-editbar').classList.remove('top');
+}
+function apFinishEdit_() {
+  apAbortEdit_();
+  if (navHistory.length && navHistory[navHistory.length - 1] === 'page-executor-appearance') navHistory.pop();
+  showPage('page-executor-appearance', { skipHistory: true });
+  applyUiSettings_();
+  renderAppearance_();
+}
+function apCancelEdit() { if (editState) apFinishEdit_(); }
+
+function apSaveEdit() {
+  if (!editState) return;
+  const e = editState;
+  const patch = { pageImage: {}, menu: {} };
+  patch.pageImage[e.pageId] = (e.slot === PAGE_LEVEL[e.pageId]) ? null : e.slot;
+  patch.menu[e.pageId] = apNormalizeMenu_(e.menu);
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res.success) { alert(res.msg || tr('ap_save_fail')); return; }
+      setUiSettings_(res.settings);
+      apFinishEdit_();
+      apSetStatus_(tr('ap_saved'));
+    })
+    .withFailureHandler(function(err) { alert(tr('ap_save_fail') + '：' + err.message); })
+    .adminSaveUiSettings(patch, currentExecutorUser, currentExecutorPass);
+}
+
+function apResetAll(kind) {
+  if (!confirm(tr(kind === 'all' ? 'ap_reset_all_confirm' : 'ap_reset_pages_confirm'))) return;
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res.success) { alert(res.msg || tr('ap_save_fail')); return; }
+      setUiSettings_(res.settings);
+      apSetStatus_(tr('ap_saved'));
+    })
+    .withFailureHandler(function(err) { alert(tr('ap_save_fail') + '：' + err.message); })
+    .adminSaveUiSettings({ reset: kind }, currentExecutorUser, currentExecutorPass);
 }
 
 /* ============================================================
