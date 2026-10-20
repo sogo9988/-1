@@ -754,6 +754,15 @@ html { background: #3b2c1e; }
 #ap-editbar .ap-edit-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
 #ap-editbar .ap-edit-actions button { padding: 6px 12px; font-size: 13px; }
 
+.dv-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; flex-wrap: wrap; font-size: 14px; }
+.dv-row label { width: 64px; flex: none; }
+.dv-row input, .dv-row select { padding: 5px 7px; font-size: 14px; flex: 1; min-width: 90px; box-sizing: border-box; }
+.dv-quick button { padding: 4px 10px; font-size: 12px; background: #ECEFF1; color: #333; }
+#dv-table { max-height: 55vh; overflow: auto; margin-top: 8px; }
+#dv-table table { width: max-content; min-width: 100%; font-size: 13px; }
+#dv-table th { position: sticky; top: 0; background: #f3f6fa; z-index: 1; white-space: nowrap; }
+#dv-table td { white-space: nowrap; }
+
 /* ============================================================
  * 表單頁按鈕（維持原本的統一尺寸）：同一種按鈕高度、字級、圓角一致，
  * 動作按鈕等寬排列，手機自動變兩欄
@@ -902,6 +911,7 @@ function bgSlotCount_() {
   <button style="background:#00796B; color:white;" onclick="goToRegionManage()" data-i18n="exec_menu_region">空棧板／區域設定</button>
   <button style="background:#5D4037; color:white;" onclick="goToChangeLog()" data-i18n="exec_menu_changelog">所有異動明細</button>
   <button style="background:#455A64; color:white;" onclick="goToInventoryAdmin()" data-i18n="exec_menu_inventory">庫存資料維護</button>
+  <button style="background:#1565C0; color:white;" onclick="goToDataView()" data-i18n="exec_menu_dataview">資料檢視與匯出</button>
   <button style="background:#00695C; color:white;" onclick="goToAppearance()" data-i18n="exec_menu_appearance">背景圖與畫面設定</button>
 <button onclick="executorLogout()" style="background:#666; color:white;" data-i18n="back_home">回首頁</button>
 </div>
@@ -976,6 +986,43 @@ function bgSlotCount_() {
   <button id="btn-inv-restore" class="btn-std" style="background:#6A1B9A; color:white;" onclick="submitInventoryRestore()" disabled data-i18n="btn_inv_restore">還原到上次操作前</button>
 </div>
 
+<br><button onclick="showPage('page-executor-menu')" style="background:#666; color:white;" data-i18n="inv_back">回上一頁</button>
+</div>
+
+<!-- 2.4d 執行者專區：資料檢視與匯出頁 -->
+<div id="page-executor-data" class="page" style="text-align: center; margin-top: 40px;">
+<h3 data-i18n="dv_title">📊 資料檢視與匯出</h3>
+<div style="max-width:680px; margin:0 auto; text-align:left;">
+  <div class="dv-row"><label data-i18n="dv_dataset">資料</label>
+    <select id="dv-dataset" onchange="dvDatasetChange()">
+      <option value="inventory" data-i18n="dv_ds_inventory">庫存總表</option>
+      <option value="change_log" data-i18n="dv_ds_change_log">所有異動明細</option>
+      <option value="issue_reports" data-i18n="dv_ds_issue_reports">單據異常回報</option>
+      <option value="special_wh_log" data-i18n="dv_ds_special_wh_log">特殊倉進出庫記錄</option>
+    </select></div>
+  <div class="dv-row"><label data-i18n="dv_date">日期</label>
+    <input type="date" id="dv-from"><span>~</span><input type="date" id="dv-to"></div>
+  <div class="dv-row dv-quick"><label></label>
+    <button onclick="dvQuick('today')" data-i18n="dv_today">今天</button>
+    <button onclick="dvQuick('7')" data-i18n="dv_7days">最近 7 天</button>
+    <button onclick="dvQuick('all')" data-i18n="dv_all">全部</button></div>
+  <div id="dv-inv-filters">
+    <div class="dv-row"><label data-i18n="dv_warehouse">庫別</label><input id="dv-warehouse">
+      <label data-i18n="dv_pallet" style="width:auto;">棧板號</label><input id="dv-pallet"></div>
+    <div class="dv-row"><label data-i18n="dv_part">料號</label><input id="dv-part">
+      <label style="width:auto;">SN</label><input id="dv-sn"></div>
+    <div class="dv-row"><label>USERS</label><input id="dv-user"></div>
+  </div>
+  <div class="dv-row"><label data-i18n="dv_keyword">關鍵字</label><input id="dv-keyword" placeholder="" onkeydown="if(event.key==='Enter'){dvSearch();}"></div>
+  <div style="display:flex; gap:8px; flex-wrap:wrap; margin:10px 0;">
+    <button class="btn-std" style="background:#2196F3; color:white;" onclick="dvSearch()" data-i18n="dv_search">查詢</button>
+    <button class="btn-std" style="background:#2E7D32; color:white;" onclick="dvExport()" data-i18n="dv_export">匯出 Excel</button>
+    <button class="btn-std" style="background:#546E7A; color:white;" onclick="dvSyncSheets()" data-i18n="dv_sync">同步到 Google Sheets</button>
+  </div>
+  <label style="font-size:13px;"><input type="checkbox" id="dv-auto" onchange="dvAutoToggle()"> <span data-i18n="dv_auto">每 30 秒自動更新</span></label>
+  <p id="dv-summary" style="font-size:14px; font-weight:bold; margin:8px 0 0;"></p>
+  <div id="dv-table" class="scroll-result-box"></div>
+</div>
 <br><button onclick="showPage('page-executor-menu')" style="background:#666; color:white;" data-i18n="inv_back">回上一頁</button>
 </div>
 
@@ -1975,6 +2022,35 @@ const I18N = {
     exec_menu_changelog: "所有異動明細",
     exec_menu_inventory: "庫存資料維護",
     exec_menu_appearance: "背景圖與畫面設定",
+    exec_menu_dataview: "資料檢視與匯出",
+    dv_title: "📊 資料檢視與匯出",
+    dv_dataset: "資料",
+    dv_ds_inventory: "庫存總表",
+    dv_ds_change_log: "所有異動明細",
+    dv_ds_issue_reports: "單據異常回報",
+    dv_ds_special_wh_log: "特殊倉進出庫記錄",
+    dv_date: "日期",
+    dv_today: "今天",
+    dv_7days: "最近 7 天",
+    dv_all: "全部",
+    dv_warehouse: "庫別",
+    dv_pallet: "棧板號",
+    dv_part: "料號",
+    dv_keyword: "關鍵字",
+    dv_search: "查詢",
+    dv_export: "匯出 Excel",
+    dv_sync: "同步到 Google Sheets",
+    dv_auto: "每 30 秒自動更新",
+    dv_loading: "查詢中...",
+    dv_summary: "{name}：共 {total} 筆，畫面顯示最新 {shown} 筆",
+    dv_summary_qty: "，合計 {qty} 片",
+    dv_exporting: "匯出中...",
+    dv_exported: "已匯出 {n} 筆：{file}",
+    dv_exported_cut: "（符合條件共 {total} 筆，Excel 最多匯出 50,000 筆，請縮小日期範圍分批匯出）",
+    dv_nodata: "沒有符合條件的資料可以匯出！",
+    dv_fail: "操作失敗",
+    dv_syncing: "同步到 Google Sheets 中...",
+    dv_synced: "已同步到 Google Sheets（{time}），庫存總表 {inv} 筆。請到試算表的「Supabase_」開頭分頁查看。",
     ap_title: "🎨 背景圖與畫面設定",
     ap_intro: "這裡的設定會存在資料庫，所有人開啟網頁都會套用。沒有調整過的地方，維持程式內建的預設。",
     ap_slots_title: "🖼️ 圖片庫",
@@ -2385,6 +2461,35 @@ const I18N = {
     exec_menu_changelog: "All Change History",
     exec_menu_inventory: "Inventory Data Maintenance",
     exec_menu_appearance: "Backgrounds & Layout",
+    exec_menu_dataview: "Data View & Export",
+    dv_title: "📊 Data View & Export",
+    dv_dataset: "Data",
+    dv_ds_inventory: "Inventory",
+    dv_ds_change_log: "Change History",
+    dv_ds_issue_reports: "Document Issue Reports",
+    dv_ds_special_wh_log: "Special Warehouse Log",
+    dv_date: "Date",
+    dv_today: "Today",
+    dv_7days: "Last 7 days",
+    dv_all: "All",
+    dv_warehouse: "Warehouse",
+    dv_pallet: "Pallet",
+    dv_part: "Part No.",
+    dv_keyword: "Keyword",
+    dv_search: "Search",
+    dv_export: "Export Excel",
+    dv_sync: "Sync to Google Sheets",
+    dv_auto: "Auto-refresh every 30 s",
+    dv_loading: "Searching...",
+    dv_summary: "{name}: {total} records in total, showing the latest {shown}",
+    dv_summary_qty: ", {qty} pcs in total",
+    dv_exporting: "Exporting...",
+    dv_exported: "Exported {n} rows: {file}",
+    dv_exported_cut: " (the filter matches {total} rows; Excel export is limited to 50,000 — narrow the date range and export in batches)",
+    dv_nodata: "There is no data to export for this filter!",
+    dv_fail: "Failed",
+    dv_syncing: "Syncing to Google Sheets...",
+    dv_synced: "Synced to Google Sheets ({time}), inventory {inv} rows. Look at the tabs starting with \"Supabase_\" in the spreadsheet.",
     ap_title: "🎨 Backgrounds & Layout",
     ap_intro: "These settings are saved in the database and apply for everyone who opens the site. Anything you do not change keeps the built-in default.",
     ap_slots_title: "🖼️ Image Library",
@@ -3273,7 +3378,7 @@ const BG_ASPECT = {1: 1.0391, 2: 1.1168, 3: 1.0, 4: 0.978, 5: 0.7467, 6: 0.7467,
 var editState = null;   // 「畫面設定」調整中的暫存狀態（null＝沒有在調整）
 const PAGE_LEVEL = {
   // 第 1 張（lv1.webp）DOA 大門
-  'page-welcome': 1, 'page-executor-login': 1, 'page-executor-menu': 1, 'page-executor-region': 1, 'page-executor-changelog': 1, 'page-executor-inventory': 1, 'page-executor-appearance': 1,
+  'page-welcome': 1, 'page-executor-login': 1, 'page-executor-menu': 1, 'page-executor-region': 1, 'page-executor-changelog': 1, 'page-executor-inventory': 1, 'page-executor-appearance': 1, 'page-executor-data': 1,
   // 第 2 張（lv2.webp）火鍋
   'page-choice': 2, 'page-designated-menu': 2, 'page-designated-upload': 2, 'page-designated-scan': 2, 'page-success': 2,
   // 第 3 張（lv3.webp）烤肉
@@ -4832,6 +4937,136 @@ function goToRegionManage() {
   document.getElementById('exec-new-limit').value = '';
   showPage('page-executor-region');
   loadRegionManageList();
+}
+
+/* ============================================================
+ * 執行者專區：資料檢視與匯出
+ * 即時查詢資料庫內容（庫存、異動明細、異常回報、特殊倉記錄），可篩選、自動更新，並匯出 Excel。
+ * ============================================================ */
+var dvTimer = null;
+const DV_TIME_COLS = { inventory: [5], change_log: [0], issue_reports: [0, 6], special_wh_log: [0] };
+const DV_QTY_COLS = { inventory: [3], special_wh_log: [6] };
+
+function dvPad_(n) { return String(n).padStart(2, '0'); }
+function dvDateStr_(d) { return d.getFullYear() + '-' + dvPad_(d.getMonth() + 1) + '-' + dvPad_(d.getDate()); }
+
+function goToDataView() {
+  document.getElementById('dv-dataset').value = 'inventory';
+  ['dv-warehouse', 'dv-pallet', 'dv-part', 'dv-sn', 'dv-user', 'dv-keyword'].forEach(function(id) { document.getElementById(id).value = ''; });
+  document.getElementById('dv-auto').checked = false;
+  dvAutoToggle();
+  dvQuick('today', true);          // 現場核對最常用：預設看今天的資料
+  dvDatasetChange(true);
+  showPage('page-executor-data');
+  dvSearch();
+}
+function dvDatasetChange(noSearch) {
+  const ds = document.getElementById('dv-dataset').value;
+  document.getElementById('dv-inv-filters').style.display = ds === 'inventory' ? 'block' : 'none';
+  if (noSearch !== true) dvSearch();
+}
+function dvQuick(kind, silent) {
+  const today = new Date();
+  const from = document.getElementById('dv-from'), to = document.getElementById('dv-to');
+  if (kind === 'all') { from.value = ''; to.value = ''; }
+  else {
+    const d = new Date(today);
+    if (kind === '7') d.setDate(d.getDate() - 6);
+    from.value = dvDateStr_(d);
+    to.value = dvDateStr_(today);
+  }
+  if (!silent) dvSearch();
+}
+function dvFilters_() {
+  const v = function(id) { return document.getElementById(id).value.trim(); };
+  return { from: v('dv-from'), to: v('dv-to'), keyword: v('dv-keyword'),
+           warehouse: v('dv-warehouse'), pallet: v('dv-pallet'), partNo: v('dv-part'), sn: v('dv-sn'), user: v('dv-user') };
+}
+function dvQuery_(limit, onOk, onFail) {
+  google.script.run
+    .withSuccessHandler(function(res) { if (!res.success) { onFail(res.msg || ''); return; } onOk(res); })
+    .withFailureHandler(function(err) { onFail(err.message); })
+    .adminDataQuery(document.getElementById('dv-dataset').value, dvFilters_(), limit, currentExecutorUser, currentExecutorPass);
+}
+function dvSearch(silent) {
+  const sum = document.getElementById('dv-summary');
+  if (silent !== true) sum.innerText = tr('dv_loading');
+  dvQuery_(200, function(res) {
+    const key = 'dv_ds_' + res.dataset;
+    let s = tr('dv_summary', { name: tr(key), total: res.total, shown: res.shown });
+    if (res.dataset === 'inventory' || res.dataset === 'special_wh_log') s += tr('dv_summary_qty', { qty: res.totalQty });
+    sum.innerText = s + '　（' + new Date().toLocaleTimeString() + '）';
+    dvRenderTable_(res);
+  }, function(msg) { sum.innerText = msg; });
+}
+function dvRenderTable_(res) {
+  const box = document.getElementById('dv-table');
+  box.innerHTML = '';
+  const table = document.createElement('table');
+  const thead = document.createElement('thead'), trh = document.createElement('tr');
+  res.columns.forEach(function(c) { const th = document.createElement('th'); th.textContent = c; trh.appendChild(th); });
+  thead.appendChild(trh); table.appendChild(thead);
+  const tb = document.createElement('tbody');
+  res.rows.forEach(function(r) {
+    const tr_ = document.createElement('tr');
+    r.forEach(function(v) { const td = document.createElement('td'); td.textContent = v == null ? '' : String(v); tr_.appendChild(td); });
+    tb.appendChild(tr_);
+  });
+  table.appendChild(tb); box.appendChild(table);
+}
+function dvAutoToggle() {
+  if (dvTimer) { clearInterval(dvTimer); dvTimer = null; }
+  if (document.getElementById('dv-auto').checked) {
+    dvTimer = setInterval(function() {
+      const pg = document.getElementById('page-executor-data');
+      if (!pg.classList.contains('active')) { clearInterval(dvTimer); dvTimer = null; document.getElementById('dv-auto').checked = false; return; }
+      dvSearch(true);
+    }, 30000);
+  }
+}
+function dvParseTime_(s) {
+  const m = /^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2}):(\d{2})$/.exec(s || '');
+  return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]) : (s || '');
+}
+function dvExport() {
+  const sum = document.getElementById('dv-summary');
+  sum.innerText = tr('dv_exporting');
+  dvQuery_(50000, function(res) {
+    if (res.total === 0) { sum.innerText = ''; alert(tr('dv_nodata')); return; }
+    const times = DV_TIME_COLS[res.dataset] || [];
+    const aoa = [res.columns].concat(res.rows.map(function(r) {
+      return r.map(function(v, i) { return times.indexOf(i) >= 0 ? dvParseTime_(v) : v; });
+    }));
+    const ws = XLSX.utils.aoa_to_sheet(aoa, { cellDates: true });
+    for (let r = 1; r < aoa.length; r++) {
+      times.forEach(function(c) {
+        const cell = ws[XLSX.utils.encode_cell({ r: r, c: c })];
+        if (cell && cell.t === 'd') cell.z = 'yyyy/mm/dd hh:mm:ss';
+      });
+    }
+    ws['!cols'] = res.columns.map(function(name, i) {
+      let w = String(name).length * 2 + 2;
+      for (let r = 0; r < Math.min(res.rows.length, 200); r++) w = Math.max(w, String(res.rows[r][i] == null ? '' : res.rows[r][i]).length + 2);
+      return { wch: Math.min(w, 60) };
+    });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, tr('dv_ds_' + res.dataset).replace(/[\[\]:*?\/\\]/g, '').slice(0, 31));
+    const d = new Date();
+    const fname = tr('dv_ds_' + res.dataset) + '_' + d.getFullYear() + dvPad_(d.getMonth() + 1) + dvPad_(d.getDate()) + '_' + dvPad_(d.getHours()) + dvPad_(d.getMinutes()) + '.xlsx';
+    XLSX.writeFile(wb, fname);
+    sum.innerText = tr('dv_exported', { n: res.rows.length, file: fname }) + (res.total > res.rows.length ? tr('dv_exported_cut', { total: res.total }) : '');
+  }, function(msg) { sum.innerText = ''; alert(tr('dv_fail') + '：' + msg); });
+}
+function dvSyncSheets() {
+  const sum = document.getElementById('dv-summary');
+  sum.innerText = tr('dv_syncing');
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res.success) { sum.innerText = ''; alert(res.msg || tr('dv_fail')); return; }
+      sum.innerText = tr('dv_synced', { time: res.syncedAt, inv: res.counts.inventory });
+    })
+    .withFailureHandler(function(err) { sum.innerText = ''; alert(tr('dv_fail') + '：' + err.message); })
+    .adminSyncSheets(currentExecutorUser, currentExecutorPass);
 }
 
 /* ============================================================
