@@ -630,11 +630,28 @@ html { background: #3b2c1e; }
     background-size: cover;
     filter: blur(26px) brightness(.8);
   }
-  .bg-layer::after {             /* 主圖：預設完整顯示；--lsize / --lpos 是執行者在「畫面設定」微調這張圖的大小與位置 */
-    inset: 0;
+  .bg-layer::after {             /* 主圖：預設完整顯示；--lsize / --lpos / --bl --bt --bw --bh 是執行者在「畫面設定」微調這張圖的大小、位置與正方形框 */
+    left: var(--bl, 0px); top: var(--bt, 0px); width: var(--bw, 100%); height: var(--bh, 100%);
     background-size: var(--lsize, contain);
     background-position: var(--lpos, center);
   }
+}
+
+/* 手機直式：這張圖有自訂大小／位置時，也用「模糊墊底＋主圖」兩層疊出來（縮小或做成正方形時，周圍才有東西墊底） */
+.bg-layer.lay { background-image: none !important; }
+.bg-layer.lay::before,
+.bg-layer.lay::after {
+  content: '';
+  position: absolute;
+  background-image: var(--img);
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.bg-layer.lay::before { inset: -40px; background-size: cover; filter: blur(26px) brightness(.8); }
+.bg-layer.lay::after {
+  left: var(--bl, 0px); top: var(--bt, 0px); width: var(--bw, 100%); height: var(--bh, 100%);
+  background-size: var(--lsize, contain);
+  background-position: var(--lpos, center);
 }
 
 /* 電腦／橫式：選單靠左上 */
@@ -767,6 +784,41 @@ html { background: #3b2c1e; }
 #dv-table td { white-space: nowrap; }
 
 /* ============================================================
+ * 按鈕形狀（執行者在「背景圖與畫面設定」選擇；沒選時維持原本的圓角按鈕）
+ *   html[data-btnshape]：sharp＝直角、pill＝膠囊、square＝正方形磚塊（直角）、squareR＝正方形磚塊（圓角）
+ *   --sq：正方形磚塊的邊長。正方形只作用在「選單頁」的按鈕，其他頁面的按鈕只改變角的形狀
+ * ============================================================ */
+html[data-btnshape="sharp"] button,
+html[data-btnshape="square"] button { border-radius: 0 !important; }
+html[data-btnshape="pill"] button { border-radius: 999px !important; }
+html[data-btnshape="squareR"] button { border-radius: 10px !important; }
+html[data-btnshape="square"] .menu-grid,
+html[data-btnshape="squareR"] .menu-grid {
+  grid-template-columns: repeat(auto-fill, var(--sq, 104px));
+  max-width: min(calc(100vw - 28px), calc(var(--sq, 104px) * 3 + 16px));
+  gap: 8px;
+}
+html[data-btnshape="square"] .menu-grid > button,
+html[data-btnshape="squareR"] .menu-grid > button {
+  grid-column: auto;
+  width: var(--sq, 104px);
+  height: var(--sq, 104px);
+  min-height: 0;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.25;
+  font-size: 14px;
+}
+.ap-shape-opts { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.ap-shape-opt { cursor: pointer; border: 2px solid #ccc; border-radius: 10px; padding: 6px 8px; background: #fff; text-align: center; font-size: 12px; min-width: 76px; }
+.ap-shape-opt.sel { border-color: #00695C; background: #E0F2F1; font-weight: bold; }
+.ap-shape-sample { display: block; margin: 0 auto 4px; background: #2196F3; }
+
+/* ============================================================
  * 表單頁按鈕（維持原本的統一尺寸）：同一種按鈕高度、字級、圓角一致，
  * 動作按鈕等寬排列，手機自動變兩欄
  * ============================================================ */
@@ -823,6 +875,19 @@ function bgSlotUrl_(n) {
   var im = UI_SETTINGS.images && UI_SETTINGS.images[n];
   return (im && im.url) ? im.url : (BG_BASE + 'lv' + n + '.webp?v=' + BG_VERSION);
 }
+/* 按鈕形狀（執行者在「背景圖與畫面設定」選擇；沒選＝原本的圓角按鈕） */
+var BTN_SQ_SIZES = { s: 84, m: 104, l: 124 };
+function applyBtnShape_() {
+  var root = document.documentElement, b = UI_SETTINGS.btnShape;
+  if (b && b.s && b.s !== 'round') {
+    root.setAttribute('data-btnshape', b.s);
+    root.style.setProperty('--sq', (BTN_SQ_SIZES[b.z] || 104) + 'px');
+  } else {
+    root.removeAttribute('data-btnshape');
+    root.style.removeProperty('--sq');
+  }
+}
+applyBtnShape_();
 function bgSlotCount_() {
   var m = 9;
   if (UI_SETTINGS.images) Object.keys(UI_SETTINGS.images).forEach(function (k) {
@@ -1042,6 +1107,22 @@ function bgSlotCount_() {
   <input type="file" id="ap-file" accept="image/*" style="display:none;" onchange="apOnFileChosen(this)">
 
   <hr style="margin:20px 0;">
+  <h4 data-i18n="ap_shape_title">🔘 按鈕形狀</h4>
+  <p style="font-size:13px; color:#666;" data-i18n="ap_shape_hint">選一種形狀，全系統的文字按鈕會一起改變。「正方形」會把選單頁的按鈕變成正方形磚塊（文字自動換行），其他頁面的按鈕則只改變角的形狀。</p>
+  <div id="ap-shapes" class="ap-shape-opts"></div>
+  <div id="ap-sizes-wrap" style="display:none; font-size:13px; margin:4px 0;">
+    <span data-i18n="ap_size_title">正方形邊長</span>：
+    <span id="ap-sizes" class="ap-shape-opts" style="display:inline-flex; margin:0 0 0 6px;"></span>
+  </div>
+  <div id="ap-shape-preview" style="margin:10px 0; padding:12px; background:rgba(60,44,30,.55); border-radius:10px;">
+    <div class="menu-grid" style="--cols:3; --btn-w:92px; --btn-h:34px; margin:0;">
+      <button class="pair" style="background:#2196F3; color:white;" data-i18n="ap_demo_1">入庫作業</button>
+      <button class="pair" style="background:#43A047; color:white;" data-i18n="ap_demo_2">發料作業</button>
+      <button class="pair" style="background:#6D4C41; color:white;" data-i18n="ap_demo_3">回首頁</button>
+    </div>
+  </div>
+
+  <hr style="margin:20px 0;">
   <h4 data-i18n="ap_pages_title">🧭 各畫面設定</h4>
   <p style="font-size:13px; color:#666;" data-i18n="ap_pages_hint">點「調整」會直接進到該畫面，用底下的調整列換背景圖、移動或縮放選單按鈕。電腦橫式和手機直式要分開各調一次（把視窗拉寬或轉向就會切換）。</p>
   <div id="ap-pages"></div>
@@ -1069,7 +1150,12 @@ function bgSlotCount_() {
   </div>
   <div id="ap-edit-nomenu" style="color:#666; margin:4px 0;" data-i18n="ap_edit_nomenu">這個畫面沒有選單按鈕，只能換背景圖。</div>
   <div class="ap-edit-sub" data-i18n="ap_edit_view_title">背景圖顯示（這張圖在所有畫面共用）</div>
-  <div class="ap-edit-row"><label data-i18n="ap_view_z">大小</label><input type="range" id="ap-view-z" min="0.5" max="3" step="0.01" oninput="apViewInput()"><span id="ap-view-z-v"></span></div>
+  <div class="ap-edit-row" style="flex-wrap:wrap;">
+    <button style="background:#455A64; color:white; padding:4px 10px; font-size:12px;" onclick="apViewPreset('cover')" data-i18n="ap_view_preset_cover">填滿螢幕</button>
+    <button style="background:#455A64; color:white; padding:4px 10px; font-size:12px;" onclick="apViewPreset('contain')" data-i18n="ap_view_preset_contain">整張完整顯示</button>
+    <button style="background:#455A64; color:white; padding:4px 10px; font-size:12px;" onclick="apViewPreset('square')" data-i18n="ap_view_preset_square">正方形</button>
+  </div>
+  <div class="ap-edit-row"><label data-i18n="ap_view_z">大小</label><input type="range" id="ap-view-z" min="0.3" max="3" step="0.01" oninput="apViewInput()"><span id="ap-view-z-v"></span></div>
   <div class="ap-edit-row"><label data-i18n="ap_view_x">左右</label><input type="range" id="ap-view-x" min="0" max="1" step="0.005" oninput="apViewInput()"><span id="ap-view-x-v"></span></div>
   <div class="ap-edit-row"><label data-i18n="ap_view_y">上下</label><input type="range" id="ap-view-y" min="0" max="1" step="0.005" oninput="apViewInput()"><span id="ap-view-y-v"></span></div>
   <div id="ap-view-note" style="color:#666; font-size:12px; margin:2px 0;"></div>
@@ -1946,7 +2032,7 @@ function bgSlotCount_() {
  * 貼上你「部署 Apps Script 為網頁應用程式」後拿到的網址
  * (格式類似 https://script.google.com/macros/s/AKfycb.../exec)
  * ============================================================ */
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxCPxvzbitsDRyPNT-EFnEUaRJxKNFjtxFN78IYkT5Efhq8qPX0DqBE3jKQajzvJNREmw/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxCPxvzbitsDRyPNT-EFnEUaRJxKNFjtxFN78IYkT5Efhq8qPX0DqBE3jKQajzvJNREmw/exe';
 
 /* ============================================================
  * google.script.run 相容層（Compatibility Shim）
@@ -2104,7 +2190,25 @@ const I18N = {
     ap_view_z: "大小",
     ap_view_x: "左右",
     ap_view_y: "上下",
-    ap_view_note_p: "手機：100% ＝ 填滿螢幕（不能更小）。放大後用「左右、上下」決定看圖的哪一塊。",
+    ap_view_note_p: "手機：100% ＝ 填滿螢幕（圖很大時可以縮小，最小 30%，周圍會用模糊的同一張圖墊底）。放大後用「左右、上下」決定看圖的哪一塊。",
+    ap_view_note_sq: "正方形：大小以螢幕短邊為 100%，圖片會填滿正方形（多出的部分裁掉）；左右、上下是正方形在螢幕上的位置，其餘用模糊的同一張圖墊底。",
+    ap_view_preset_cover: "填滿螢幕",
+    ap_view_preset_contain: "整張完整顯示",
+    ap_view_preset_square: "正方形",
+    ap_shape_title: "🔘 按鈕形狀",
+    ap_shape_hint: "選一種形狀，全系統的文字按鈕會一起改變。「正方形」會把選單頁的按鈕變成正方形磚塊（文字自動換行），其他頁面的按鈕則只改變角的形狀。",
+    ap_shape_round: "圓角（預設）",
+    ap_shape_sharp: "直角",
+    ap_shape_pill: "膠囊",
+    ap_shape_square: "正方形（直角）",
+    ap_shape_squareR: "正方形（圓角）",
+    ap_size_title: "正方形邊長",
+    ap_size_s: "小",
+    ap_size_m: "中",
+    ap_size_l: "大",
+    ap_demo_1: "入庫作業",
+    ap_demo_2: "發料作業",
+    ap_demo_3: "回首頁",
     ap_view_note_l: "電腦：100% ＝ 整張圖完整顯示。放大會裁掉邊緣，縮小則兩旁由模糊的同一張圖墊底。",
     ap_reset_views: "還原所有圖片的顯示調整（大小與位置）",
     ap_reset_views_confirm: "確定要還原所有圖片的大小與位置調整嗎？（圖片本身和各畫面的設定都會保留）",
@@ -2554,7 +2658,25 @@ const I18N = {
     ap_view_z: "Size",
     ap_view_x: "Left/Right",
     ap_view_y: "Up/Down",
-    ap_view_note_p: "Phone: 100% = fills the screen (cannot go smaller). When zoomed in, use Left/Right and Up/Down to choose which part to show.",
+    ap_view_note_p: "Phone: 100% = fills the screen (large pictures can go down to 30%; the rest is filled with a blurred copy). When zoomed in, use Left/Right and Up/Down to choose which part to show.",
+    ap_view_note_sq: "Square: size is relative to the shorter screen side (100%); the picture fills the square (extra parts are cropped); Left/Right and Up/Down place the square on the screen; the rest is filled with a blurred copy.",
+    ap_view_preset_cover: "Fill screen",
+    ap_view_preset_contain: "Whole picture",
+    ap_view_preset_square: "Square",
+    ap_shape_title: "🔘 Button Shape",
+    ap_shape_hint: "Pick a shape and every text button in the system changes with it. \"Square\" turns the buttons on menu pages into square tiles (text wraps automatically); buttons on other pages only change their corner shape.",
+    ap_shape_round: "Rounded (default)",
+    ap_shape_sharp: "Sharp corners",
+    ap_shape_pill: "Pill",
+    ap_shape_square: "Square (sharp)",
+    ap_shape_squareR: "Square (rounded)",
+    ap_size_title: "Square size",
+    ap_size_s: "S",
+    ap_size_m: "M",
+    ap_size_l: "L",
+    ap_demo_1: "Inbound",
+    ap_demo_2: "Outbound",
+    ap_demo_3: "Home",
     ap_view_note_l: "Desktop: 100% = the whole picture is visible. Zooming in crops the edges; zooming out fills the sides with a blurred copy.",
     ap_reset_views: "Restore all image display adjustments (size and position)",
     ap_reset_views_confirm: "Restore the size and position of all images? (The images and each screen's settings are kept.)",
@@ -5105,8 +5227,8 @@ function dvSyncSheets() {
 
 /* ============================================================
  * 圖片顯示微調：每張圖、手機直式與電腦橫式各自設定「大小」與「位置」
- *   UI_SETTINGS.imageView[第幾張] = { l: {z,x,y}, p: {z,x,y} }
- *   z＝大小倍率（1＝預設）、x/y＝圖片對齊的位置 0～1（0.5＝置中）
+ *   UI_SETTINGS.imageView[第幾張] = { l: {z,x,y,m}, p: {z,x,y,m} }
+ *   z＝大小倍率（1＝預設）、x/y＝圖片對齊的位置 0～1（0.5＝置中）、m＝'square' 表示做成正方形框（沒有 m ＝ 一般）
  * 沒設定的圖維持原本的預設顯示（手機：填滿螢幕並依圖調過取景；電腦：完整顯示）。
  * ============================================================ */
 const VIEW_DEFAULT_P_POS = { 1: [0.5, 0.5], 2: [0.9, 0.5], 3: [0.8, 0.5], 8: [0.9, 0.5], 9: [0.75, 0.5] };   // 與上方 CSS 內建的手機取景一致
@@ -5127,26 +5249,38 @@ function applyImageView_() {
   const rect = stage.getBoundingClientRect();
   const W = rect.width || window.innerWidth, H = rect.height || window.innerHeight;
   const o = orient_();
+  const clearVars = function(el) {
+    ['--lsize', '--lpos', '--bl', '--bt', '--bw', '--bh'].forEach(function(k) { el.style.removeProperty(k); });
+    el.classList.remove('lay');
+  };
+  // 這張圖在目前螢幕上實際顯示的矩形（給選單定位用）；free＝圖片本身、square＝正方形框
+  const rectOf_ = function(slot, v) {
+    const ar = aspectFor_(slot);
+    if (v.m === 'square') {
+      const side = Math.min(Math.min(W, H) * v.z, Math.max(W, H));
+      return { w: side, h: side, left: (W - side) * v.x, top: (H - side) * v.y };
+    }
+    const base = (o === 'p') ? Math.max(W, H * ar) : Math.min(W, H * ar);
+    const w = base * v.z, h = w / ar;
+    return { w: w, h: h, left: (W - w) * v.x, top: (H - h) * v.y };
+  };
   stage.querySelectorAll('.bg-layer').forEach(function(el) {
     const slot = parseInt(el.getAttribute('data-level'), 10);
     const v = viewFor_(slot, o);
+    if (!v) { clearVars(el); return; }          // 沒自訂：交回 CSS 的預設
+    if (o === 'p') el.classList.add('lay'); else el.classList.remove('lay');   // 電腦橫式本來就是兩層疊出來的
     const ar = aspectFor_(slot);
-    if (!v) {                                   // 沒自訂：交回 CSS 的預設
-      el.style.removeProperty('--lsize');
-      el.style.removeProperty('--lpos');
-      el.style.removeProperty('background-size');
-      el.style.removeProperty('background-position');
-      return;
-    }
-    const pos = (v.x * 100) + '% ' + (v.y * 100) + '%';
-    if (o === 'p') {                            // 手機：以「填滿螢幕」為 1 倍
-      const coverW = Math.max(W, H * ar);
-      el.style.backgroundSize = (coverW * v.z) + 'px auto';
-      el.style.backgroundPosition = pos;
-    } else {                                    // 電腦：以「完整顯示」為 1 倍
-      const containW = Math.min(W, H * ar);
-      el.style.setProperty('--lsize', (containW * v.z) + 'px auto');
-      el.style.setProperty('--lpos', pos);
+    if (v.m === 'square') {                      // 正方形：邊長以螢幕短邊為 100%，圖片填滿正方形（會裁掉多出來的部分）
+      const r = rectOf_(slot, v);
+      el.style.setProperty('--bl', r.left + 'px'); el.style.setProperty('--bt', r.top + 'px');
+      el.style.setProperty('--bw', r.w + 'px');    el.style.setProperty('--bh', r.h + 'px');
+      el.style.setProperty('--lsize', 'cover');
+      el.style.setProperty('--lpos', '50% 50%');
+    } else {
+      ['--bl', '--bt', '--bw', '--bh'].forEach(function(k) { el.style.removeProperty(k); });
+      const base = (o === 'p') ? Math.max(W, H * ar) : Math.min(W, H * ar);   // 手機：填滿螢幕＝100%；電腦：完整顯示＝100%
+      el.style.setProperty('--lsize', (base * v.z) + 'px auto');
+      el.style.setProperty('--lpos', (v.x * 100) + '% ' + (v.y * 100) + '%');
     }
   });
   // 電腦橫式：選單位置是對齊「圖片實際顯示的範圍」，圖片大小或位置改了，範圍也要跟著算
@@ -5155,12 +5289,10 @@ function applyImageView_() {
   ['--frame-w', '--frame-h', '--frame-l', '--frame-t'].forEach(function(k) { root.style.removeProperty(k); });
   viewFrame_ = null;
   if (vc) {
-    const ar = aspectFor_(cur);
-    const w = Math.min(W, H * ar) * vc.z, h = w / ar;
-    const left = (W - w) * vc.x, top = (H - h) * vc.y;
-    const l = Math.max(0, left), t = Math.max(0, top);
-    const r = Math.min(W, left + w), b = Math.min(H, top + h);
-    viewFrame_ = { l: l, t: t, w: Math.max(1, r - l), h: Math.max(1, b - t) };
+    const r = rectOf_(cur, vc);
+    const l = Math.max(0, r.left), t = Math.max(0, r.top);
+    const rr = Math.min(W, r.left + r.w), bb = Math.min(H, r.top + r.h);
+    viewFrame_ = { l: l, t: t, w: Math.max(1, rr - l), h: Math.max(1, bb - t) };
     root.style.setProperty('--frame-l', viewFrame_.l + 'px');
     root.style.setProperty('--frame-t', viewFrame_.t + 'px');
     root.style.setProperty('--frame-w', viewFrame_.w + 'px');
@@ -5226,6 +5358,7 @@ function applyMenuSettings_(pageId) {
   }
 }
 function applyUiSettings_() {
+  applyBtnShape_();
   applyImageVars_();
   applyBackdrop_(currentPageId);
   applyMenuSettings_(currentPageId);
@@ -5278,6 +5411,7 @@ function goToAppearance() {
 }
 
 function renderAppearance_() {
+  apRenderBtnShape_();
   // 圖片庫
   const grid = document.getElementById('ap-slots');
   grid.innerHTML = '';
@@ -5329,6 +5463,60 @@ function renderAppearance_() {
     row.appendChild(b);
     list.appendChild(row);
   });
+}
+
+/* ---------- 按鈕形狀 ---------- */
+const AP_SHAPES = [
+  { id: 'round',   key: 'ap_shape_round',   radius: '8px',  tile: false },
+  { id: 'sharp',   key: 'ap_shape_sharp',   radius: '0',    tile: false },
+  { id: 'pill',    key: 'ap_shape_pill',    radius: '999px', tile: false },
+  { id: 'square',  key: 'ap_shape_square',  radius: '0',    tile: true },
+  { id: 'squareR', key: 'ap_shape_squareR', radius: '10px', tile: true }
+];
+function apRenderBtnShape_() {
+  const cur = UI_SETTINGS.btnShape || { s: 'round', z: 'm' };
+  const box = document.getElementById('ap-shapes');
+  box.innerHTML = '';
+  AP_SHAPES.forEach(function(sh) {
+    const d = apEl_('div', 'ap-shape-opt' + (cur.s === sh.id || (!UI_SETTINGS.btnShape && sh.id === 'round') ? ' sel' : ''));
+    const s = apEl_('span', 'ap-shape-sample');
+    s.style.width = sh.tile ? '34px' : '58px';
+    s.style.height = sh.tile ? '34px' : '24px';
+    s.style.borderRadius = sh.radius;
+    d.appendChild(s);
+    d.appendChild(apEl_('div', '', tr(sh.key)));
+    d.onclick = function() { apSetBtnShape(sh.id, cur.z); };
+    box.appendChild(d);
+  });
+  const isTile = cur.s === 'square' || cur.s === 'squareR';
+  document.getElementById('ap-sizes-wrap').style.display = isTile ? 'block' : 'none';
+  const sz = document.getElementById('ap-sizes');
+  sz.innerHTML = '';
+  [['s', 'ap_size_s'], ['m', 'ap_size_m'], ['l', 'ap_size_l']].forEach(function(p) {
+    const d = apEl_('div', 'ap-shape-opt' + ((cur.z || 'm') === p[0] ? ' sel' : ''), tr(p[1]));
+    d.style.minWidth = '44px';
+    d.onclick = function() { apSetBtnShape(cur.s, p[0]); };
+    sz.appendChild(d);
+  });
+}
+function apSetBtnShape(shape, size) {
+  const prev = UI_SETTINGS.btnShape;
+  const next = (shape === 'round') ? null : { s: shape, z: size || 'm' };
+  if (next) UI_SETTINGS.btnShape = next; else delete UI_SETTINGS.btnShape;
+  applyBtnShape_();
+  apRenderBtnShape_();
+  const revert = function() {
+    if (prev) UI_SETTINGS.btnShape = prev; else delete UI_SETTINGS.btnShape;
+    applyBtnShape_(); apRenderBtnShape_();
+  };
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res.success) { revert(); alert(res.msg || tr('ap_save_fail')); return; }
+      setUiSettings_(res.settings);
+      apSetStatus_(tr('ap_saved'));
+    })
+    .withFailureHandler(function(err) { revert(); alert(tr('ap_save_fail') + '：' + err.message); })
+    .adminSaveUiSettings({ btnShape: next }, currentExecutorUser, currentExecutorPass);
 }
 
 /* ---------- 上傳／更換圖片（先在瀏覽器轉成 WebP 並縮小） ---------- */
@@ -5440,10 +5628,10 @@ function apRenderEditBar_() {
   document.getElementById('ap-edit-nomenu').style.display = (!isMenu && !e.imageOnly) ? 'block' : 'none';
   // 背景圖顯示：手機以「填滿螢幕」為 100%（不能更小），電腦以「完整顯示」為 100%
   const vz = document.getElementById('ap-view-z');
-  vz.min = (o === 'p') ? '1' : '0.5';
+  vz.min = '0.3';
   const v = viewFor_(e.slot, o) || viewDefault_(e.slot, o);
   vz.value = v.z; document.getElementById('ap-view-x').value = v.x; document.getElementById('ap-view-y').value = v.y;
-  document.getElementById('ap-view-note').innerText = tr(o === 'p' ? 'ap_view_note_p' : 'ap_view_note_l');
+  document.getElementById('ap-view-note').innerText = tr(v.m === 'square' ? 'ap_view_note_sq' : (o === 'p' ? 'ap_view_note_p' : 'ap_view_note_l'));
   const m = e.menu[o] || { dx: 0, dy: 0, s: 1 };
   document.getElementById('ap-edit-dx').value = m.dx;
   document.getElementById('ap-edit-dy').value = m.dy;
@@ -5462,14 +5650,36 @@ function apViewInput() {
   if (!editState) return;
   const e = editState, o = orient_();
   e.view[e.slot] = e.view[e.slot] || {};
-  e.view[e.slot][o] = {
+  const prev = e.view[e.slot][o];
+  const nv = {
     z: parseFloat(document.getElementById('ap-view-z').value),
     x: parseFloat(document.getElementById('ap-view-x').value),
     y: parseFloat(document.getElementById('ap-view-y').value)
   };
+  if (prev && prev.m) nv.m = prev.m;
+  e.view[e.slot][o] = nv;
   e.touched[e.slot] = true;
   applyImageView_();
   apUpdateEditLabels_();
+}
+// 預設按鈕：填滿螢幕／整張完整顯示／正方形
+function apViewPreset(kind) {
+  if (!editState) return;
+  const e = editState, o = orient_(), slot = e.slot;
+  const rect = document.getElementById('bg-stage').getBoundingClientRect();
+  const W = rect.width || window.innerWidth, H = rect.height || window.innerHeight;
+  const ar = aspectFor_(slot);
+  const cover = Math.max(W, H * ar), contain = Math.min(W, H * ar);
+  const base = (o === 'p') ? cover : contain;                 // 目前這個裝置上「大小 100%」代表的寬度
+  let v;
+  if (kind === 'square') v = { m: 'square', z: 1, x: 0.5, y: 0.5 };
+  else if (kind === 'contain') v = { z: contain / base, x: 0.5, y: 0.5 };
+  else { const d = viewDefault_(slot, o); v = { z: cover / base, x: d.x, y: d.y }; }
+  e.view[slot] = e.view[slot] || {};
+  e.view[slot][o] = v;
+  e.touched[slot] = true;
+  applyImageView_();
+  apRenderEditBar_();
 }
 function apResetView() {
   if (!editState) return;
@@ -5484,8 +5694,9 @@ function apNormalizeView_(v, slot) {
   ['l', 'p'].forEach(function(k) {
     const m = v && v[k]; if (!m) return;
     const d = viewDefault_(slot, k);
-    if (Math.abs(m.z - d.z) > 0.0005 || Math.abs(m.x - d.x) > 0.0005 || Math.abs(m.y - d.y) > 0.0005) {
+    if (m.m === 'square' || Math.abs(m.z - d.z) > 0.0005 || Math.abs(m.x - d.x) > 0.0005 || Math.abs(m.y - d.y) > 0.0005) {
       out[k] = { z: Math.round(m.z * 1000) / 1000, x: Math.round(m.x * 1000) / 1000, y: Math.round(m.y * 1000) / 1000 };
+      if (m.m === 'square') out[k].m = 'square';
     }
   });
   return Object.keys(out).length ? out : null;
