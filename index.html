@@ -630,9 +630,10 @@ html { background: #3b2c1e; }
     background-size: cover;
     filter: blur(26px) brightness(.8);
   }
-  .bg-layer::after {             /* 主圖：完整顯示 */
+  .bg-layer::after {             /* 主圖：預設完整顯示；--lsize / --lpos 是執行者在「畫面設定」微調這張圖的大小與位置 */
     inset: 0;
-    background-size: contain;
+    background-size: var(--lsize, contain);
+    background-position: var(--lpos, center);
   }
 }
 
@@ -745,7 +746,9 @@ html { background: #3b2c1e; }
   box-shadow: 0 6px 24px rgba(0,0,0,.35); font-size: 13px; color: #222; text-align: left;
 }
 #ap-editbar.top { bottom: auto; top: 10px; }
+#ap-editbar { max-height: 64vh; overflow-y: auto; }
 #ap-editbar .ap-edit-title { font-weight: bold; margin-bottom: 6px; }
+#ap-editbar .ap-edit-sub { font-weight: bold; color: #00695C; margin: 8px 0 2px; }
 #ap-editbar .ap-edit-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
 #ap-editbar .ap-edit-row label { width: 56px; flex: none; }
 #ap-editbar .ap-edit-row input[type=range] { flex: 1; min-width: 0; }
@@ -1047,6 +1050,7 @@ function bgSlotCount_() {
   <h4 data-i18n="ap_reset_title">↩️ 還原預設</h4>
   <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-start;">
     <button class="btn-std" style="background:#F57C00; color:white;" onclick="apResetAll('pages')" data-i18n="ap_reset_pages">還原所有畫面的設定（背景圖分配與選單位置）</button>
+    <button class="btn-std" style="background:#E65100; color:white;" onclick="apResetAll('views')" data-i18n="ap_reset_views">還原所有圖片的顯示調整（大小與位置）</button>
     <button class="btn-std" style="background:#B71C1C; color:white;" onclick="apResetAll('all')" data-i18n="ap_reset_all">全部還原（含上傳過的圖片，回到程式內建的 9 張）</button>
   </div>
 </div>
@@ -1064,9 +1068,15 @@ function bgSlotCount_() {
     <div class="ap-edit-row"><label data-i18n="ap_edit_s">大小</label><input type="range" id="ap-edit-s" min="0.5" max="2" step="0.05" oninput="apEditInput()"><span id="ap-edit-s-v"></span></div>
   </div>
   <div id="ap-edit-nomenu" style="color:#666; margin:4px 0;" data-i18n="ap_edit_nomenu">這個畫面沒有選單按鈕，只能換背景圖。</div>
+  <div class="ap-edit-sub" data-i18n="ap_edit_view_title">背景圖顯示（這張圖在所有畫面共用）</div>
+  <div class="ap-edit-row"><label data-i18n="ap_view_z">大小</label><input type="range" id="ap-view-z" min="0.5" max="3" step="0.01" oninput="apViewInput()"><span id="ap-view-z-v"></span></div>
+  <div class="ap-edit-row"><label data-i18n="ap_view_x">左右</label><input type="range" id="ap-view-x" min="0" max="1" step="0.005" oninput="apViewInput()"><span id="ap-view-x-v"></span></div>
+  <div class="ap-edit-row"><label data-i18n="ap_view_y">上下</label><input type="range" id="ap-view-y" min="0" max="1" step="0.005" oninput="apViewInput()"><span id="ap-view-y-v"></span></div>
+  <div id="ap-view-note" style="color:#666; font-size:12px; margin:2px 0;"></div>
   <div class="ap-edit-actions">
     <button style="background:#2E7D32; color:white;" onclick="apSaveEdit()" data-i18n="ap_edit_save">儲存</button>
-    <button style="background:#F57C00; color:white;" onclick="apResetEditPage()" data-i18n="ap_edit_reset">這個畫面還原預設</button>
+    <button id="ap-btn-reset-page" style="background:#F57C00; color:white;" onclick="apResetEditPage()" data-i18n="ap_edit_reset">這個畫面還原預設</button>
+    <button style="background:#EF6C00; color:white;" onclick="apResetView()" data-i18n="ap_edit_view_reset">這張圖還原預設</button>
     <button style="background:#666; color:white;" onclick="apCancelEdit()" data-i18n="ap_edit_cancel">取消</button>
     <button style="background:#90A4AE; color:white;" onclick="apToggleDock()" data-i18n="ap_edit_dock">調整列移到上方／下方</button>
   </div>
@@ -2087,6 +2097,17 @@ const I18N = {
     ap_edit_reset: "這個畫面還原預設",
     ap_edit_cancel: "取消",
     ap_edit_dock: "調整列移到上方／下方",
+    ap_btn_view: "顯示調整",
+    ap_edit_view_title: "背景圖顯示（這張圖在所有畫面共用）",
+    ap_edit_view_reset: "這張圖還原預設",
+    ap_edit_title_img: "調整圖片顯示：第 {slot} 張（{orient}）",
+    ap_view_z: "大小",
+    ap_view_x: "左右",
+    ap_view_y: "上下",
+    ap_view_note_p: "手機：100% ＝ 填滿螢幕（不能更小）。放大後用「左右、上下」決定看圖的哪一塊。",
+    ap_view_note_l: "電腦：100% ＝ 整張圖完整顯示。放大會裁掉邊緣，縮小則兩旁由模糊的同一張圖墊底。",
+    ap_reset_views: "還原所有圖片的顯示調整（大小與位置）",
+    ap_reset_views_confirm: "確定要還原所有圖片的大小與位置調整嗎？（圖片本身和各畫面的設定都會保留）",
     inv_back: "回上一頁",
     inv_admin_title: "📦 庫存資料維護",
     inv_admin_loading: "讀取中...",
@@ -2526,6 +2547,17 @@ const I18N = {
     ap_edit_reset: "Restore this screen",
     ap_edit_cancel: "Cancel",
     ap_edit_dock: "Move bar to top / bottom",
+    ap_btn_view: "Display",
+    ap_edit_view_title: "Background display (shared by every screen using this image)",
+    ap_edit_view_reset: "Restore this image",
+    ap_edit_title_img: "Adjusting image display: Image {slot} ({orient})",
+    ap_view_z: "Size",
+    ap_view_x: "Left/Right",
+    ap_view_y: "Up/Down",
+    ap_view_note_p: "Phone: 100% = fills the screen (cannot go smaller). When zoomed in, use Left/Right and Up/Down to choose which part to show.",
+    ap_view_note_l: "Desktop: 100% = the whole picture is visible. Zooming in crops the edges; zooming out fills the sides with a blurred copy.",
+    ap_reset_views: "Restore all image display adjustments (size and position)",
+    ap_reset_views_confirm: "Restore the size and position of all images? (The images and each screen's settings are kept.)",
     inv_back: "Back",
     inv_admin_title: "📦 Inventory Data Maintenance",
     inv_admin_loading: "Loading...",
@@ -3375,7 +3407,8 @@ let currentPageId = 'page-welcome';
  * （沒補的頁面會沿用目前背景）。
  * ============================================================ */
 const BG_ASPECT = {1: 1.0391, 2: 1.1168, 3: 1.0, 4: 0.978, 5: 0.7467, 6: 0.7467, 7: 1.0573, 8: 1.0, 9: 0.8159};   // 各張圖的寬高比（寬÷高），換圖後要一起更新
-var editState = null;   // 「畫面設定」調整中的暫存狀態（null＝沒有在調整）
+var editState = null;
+var viewFrame_ = null;   // 圖片在電腦橫式的實際顯示範圍（有自訂大小／位置時才有值）   // 「畫面設定」調整中的暫存狀態（null＝沒有在調整）
 const PAGE_LEVEL = {
   // 第 1 張（lv1.webp）DOA 大門
   'page-welcome': 1, 'page-executor-login': 1, 'page-executor-menu': 1, 'page-executor-region': 1, 'page-executor-changelog': 1, 'page-executor-inventory': 1, 'page-executor-appearance': 1, 'page-executor-data': 1,
@@ -3434,7 +3467,7 @@ function fitButtonLabels_() {
 function updateUiScale_() {
   const root = document.documentElement;
   const ar = parseFloat(root.style.getPropertyValue('--ar')) || 1.0391;
-  const frameH = Math.min(window.innerHeight, window.innerWidth / ar);
+  const frameH = viewFrame_ ? viewFrame_.h : Math.min(window.innerHeight, window.innerWidth / ar);
   const s = Math.max(0.85, Math.min(1.7, frameH / 664));
   root.style.setProperty('--ui-scale', s.toFixed(3));
 }
@@ -3453,6 +3486,7 @@ function applyBackdrop_(pageId) {
     stage.querySelectorAll('.bg-layer').forEach(function(el) {
       el.classList.toggle('on', el.getAttribute('data-level') === String(lv));
     });
+    applyImageView_();
   }
   const pageEl = document.getElementById(pageId);
   const soft = !!(pageEl && pageEl.querySelector('table, .scroll-result-box, .empty-pallet-grid'));
@@ -5070,6 +5104,73 @@ function dvSyncSheets() {
 }
 
 /* ============================================================
+ * 圖片顯示微調：每張圖、手機直式與電腦橫式各自設定「大小」與「位置」
+ *   UI_SETTINGS.imageView[第幾張] = { l: {z,x,y}, p: {z,x,y} }
+ *   z＝大小倍率（1＝預設）、x/y＝圖片對齊的位置 0～1（0.5＝置中）
+ * 沒設定的圖維持原本的預設顯示（手機：填滿螢幕並依圖調過取景；電腦：完整顯示）。
+ * ============================================================ */
+const VIEW_DEFAULT_P_POS = { 1: [0.5, 0.5], 2: [0.9, 0.5], 3: [0.8, 0.5], 8: [0.9, 0.5], 9: [0.75, 0.5] };   // 與上方 CSS 內建的手機取景一致
+function viewDefault_(slot, o) {
+  if (o === 'l') return { z: 1, x: 0.5, y: 0.5 };
+  const p = VIEW_DEFAULT_P_POS[slot] || [0.5, 0.5];
+  return { z: 1, x: p[0], y: p[1] };
+}
+function viewFor_(slot, o) {
+  const src = (editState && editState.view) ? editState.view : (UI_SETTINGS.imageView || {});
+  const s = src[slot];
+  return (s && s[o]) ? s[o] : null;
+}
+function applyImageView_() {
+  const stage = document.getElementById('bg-stage');
+  if (!stage) return;
+  const root = document.documentElement;
+  const rect = stage.getBoundingClientRect();
+  const W = rect.width || window.innerWidth, H = rect.height || window.innerHeight;
+  const o = orient_();
+  stage.querySelectorAll('.bg-layer').forEach(function(el) {
+    const slot = parseInt(el.getAttribute('data-level'), 10);
+    const v = viewFor_(slot, o);
+    const ar = aspectFor_(slot);
+    if (!v) {                                   // 沒自訂：交回 CSS 的預設
+      el.style.removeProperty('--lsize');
+      el.style.removeProperty('--lpos');
+      el.style.removeProperty('background-size');
+      el.style.removeProperty('background-position');
+      return;
+    }
+    const pos = (v.x * 100) + '% ' + (v.y * 100) + '%';
+    if (o === 'p') {                            // 手機：以「填滿螢幕」為 1 倍
+      const coverW = Math.max(W, H * ar);
+      el.style.backgroundSize = (coverW * v.z) + 'px auto';
+      el.style.backgroundPosition = pos;
+    } else {                                    // 電腦：以「完整顯示」為 1 倍
+      const containW = Math.min(W, H * ar);
+      el.style.setProperty('--lsize', (containW * v.z) + 'px auto');
+      el.style.setProperty('--lpos', pos);
+    }
+  });
+  // 電腦橫式：選單位置是對齊「圖片實際顯示的範圍」，圖片大小或位置改了，範圍也要跟著算
+  const cur = levelFor_(currentPageId);
+  const vc = (o === 'l' && cur) ? viewFor_(cur, 'l') : null;
+  ['--frame-w', '--frame-h', '--frame-l', '--frame-t'].forEach(function(k) { root.style.removeProperty(k); });
+  viewFrame_ = null;
+  if (vc) {
+    const ar = aspectFor_(cur);
+    const w = Math.min(W, H * ar) * vc.z, h = w / ar;
+    const left = (W - w) * vc.x, top = (H - h) * vc.y;
+    const l = Math.max(0, left), t = Math.max(0, top);
+    const r = Math.min(W, left + w), b = Math.min(H, top + h);
+    viewFrame_ = { l: l, t: t, w: Math.max(1, r - l), h: Math.max(1, b - t) };
+    root.style.setProperty('--frame-l', viewFrame_.l + 'px');
+    root.style.setProperty('--frame-t', viewFrame_.t + 'px');
+    root.style.setProperty('--frame-w', viewFrame_.w + 'px');
+    root.style.setProperty('--frame-h', viewFrame_.h + 'px');
+  }
+  updateUiScale_();
+}
+window.addEventListener('resize', applyImageView_);
+
+/* ============================================================
  * 畫面設定：背景圖與選單位置（執行者專區可調整）
  * 設定存在資料庫，所有人開啟網頁都會套用；沒有任何設定時＝程式內建的預設。
  *   UI_SETTINGS.images    上傳過的圖片（第幾張 → 網址、寬高比）
@@ -5193,6 +5294,11 @@ function renderAppearance_() {
     b.style.background = '#2196F3'; b.style.color = 'white';
     b.onclick = function() { apPickImage(n); };
     card.appendChild(b);
+    const bv = apEl_('button', '', tr('ap_btn_view'));
+    bv.style.background = '#00695C'; bv.style.color = 'white'; bv.style.marginLeft = '4px';
+    bv.onclick = function() { startImageEdit(n); };
+    card.appendChild(bv);
+    if (UI_SETTINGS.imageView && UI_SETTINGS.imageView[n]) card.appendChild(apEl_('div', 'ap-badge', tr('ap_customized')));
     grid.appendChild(card);
   }
   if (count < AP_MAX_SLOTS) {
@@ -5289,11 +5395,24 @@ async function apOnFileChosen(input) {
   }
 }
 
+// 從圖片庫進來：只調這張圖的顯示（找一個用到這張圖的畫面來預覽）
+function startImageEdit(slot) {
+  let pid = null, any = null;
+  document.querySelectorAll('.page').forEach(function(el) {
+    if (el.id === 'page-executor-appearance' || levelFor_(el.id) !== slot) return;
+    if (!any) any = el.id;
+    if (!pid && el.classList.contains('page-menu')) pid = el.id;   // 優先用「只有按鈕、背景完整看得到」的畫面預覽
+  });
+  startPageEdit(pid || any || 'page-welcome', { slot: slot, imageOnly: true });
+}
+
 /* ---------- 在實際畫面上調整：換背景圖、移動／縮放選單 ---------- */
-function startPageEdit(pageId) {
-  const cur = (UI_SETTINGS.pageImage && UI_SETTINGS.pageImage[pageId]) || PAGE_LEVEL[pageId];
+function startPageEdit(pageId, opts) {
+  opts = opts || {};
+  const cur = opts.slot || (UI_SETTINGS.pageImage && UI_SETTINGS.pageImage[pageId]) || PAGE_LEVEL[pageId];
   const menu = JSON.parse(JSON.stringify((UI_SETTINGS.menu && UI_SETTINGS.menu[pageId]) || {}));
-  editState = { pageId: pageId, slot: cur, menu: menu };
+  const view = JSON.parse(JSON.stringify(UI_SETTINGS.imageView || {}));
+  editState = { pageId: pageId, slot: cur, menu: menu, view: view, touched: {}, imageOnly: !!opts.imageOnly };
   showPage(pageId);
   apRenderEditBar_();
   document.getElementById('ap-editbar').style.display = 'block';
@@ -5303,8 +5422,9 @@ function apRenderEditBar_() {
   if (!editState) return;
   const e = editState;
   const o = orient_();
-  document.getElementById('ap-edit-title').innerText =
-    tr('ap_edit_title', { page: pageTitle_(e.pageId), orient: tr(o === 'l' ? 'ap_orient_l' : 'ap_orient_p') });
+  document.getElementById('ap-edit-title').innerText = e.imageOnly
+    ? tr('ap_edit_title_img', { slot: e.slot, orient: tr(o === 'l' ? 'ap_orient_l' : 'ap_orient_p') })
+    : tr('ap_edit_title', { page: pageTitle_(e.pageId), orient: tr(o === 'l' ? 'ap_orient_l' : 'ap_orient_p') });
   const sel = document.getElementById('ap-edit-slot');
   sel.innerHTML = '';
   for (let n = 1; n <= bgSlotCount_(); n++) {
@@ -5314,8 +5434,16 @@ function apRenderEditBar_() {
   }
   sel.value = String(e.slot);
   const isMenu = document.getElementById(e.pageId).classList.contains('page-menu');
-  document.getElementById('ap-edit-menu').style.display = isMenu ? 'block' : 'none';
-  document.getElementById('ap-edit-nomenu').style.display = isMenu ? 'none' : 'block';
+  sel.disabled = !!e.imageOnly;
+  document.getElementById('ap-btn-reset-page').style.display = e.imageOnly ? 'none' : '';
+  document.getElementById('ap-edit-menu').style.display = (isMenu && !e.imageOnly) ? 'block' : 'none';
+  document.getElementById('ap-edit-nomenu').style.display = (!isMenu && !e.imageOnly) ? 'block' : 'none';
+  // 背景圖顯示：手機以「填滿螢幕」為 100%（不能更小），電腦以「完整顯示」為 100%
+  const vz = document.getElementById('ap-view-z');
+  vz.min = (o === 'p') ? '1' : '0.5';
+  const v = viewFor_(e.slot, o) || viewDefault_(e.slot, o);
+  vz.value = v.z; document.getElementById('ap-view-x').value = v.x; document.getElementById('ap-view-y').value = v.y;
+  document.getElementById('ap-view-note').innerText = tr(o === 'p' ? 'ap_view_note_p' : 'ap_view_note_l');
   const m = e.menu[o] || { dx: 0, dy: 0, s: 1 };
   document.getElementById('ap-edit-dx').value = m.dx;
   document.getElementById('ap-edit-dy').value = m.dy;
@@ -5326,6 +5454,41 @@ function apUpdateEditLabels_() {
   document.getElementById('ap-edit-dx-v').innerText = Math.round(document.getElementById('ap-edit-dx').value * 100) + '%';
   document.getElementById('ap-edit-dy-v').innerText = Math.round(document.getElementById('ap-edit-dy').value * 100) + '%';
   document.getElementById('ap-edit-s-v').innerText = Math.round(document.getElementById('ap-edit-s').value * 100) + '%';
+  document.getElementById('ap-view-z-v').innerText = Math.round(document.getElementById('ap-view-z').value * 100) + '%';
+  document.getElementById('ap-view-x-v').innerText = Math.round(document.getElementById('ap-view-x').value * 100) + '%';
+  document.getElementById('ap-view-y-v').innerText = Math.round(document.getElementById('ap-view-y').value * 100) + '%';
+}
+function apViewInput() {
+  if (!editState) return;
+  const e = editState, o = orient_();
+  e.view[e.slot] = e.view[e.slot] || {};
+  e.view[e.slot][o] = {
+    z: parseFloat(document.getElementById('ap-view-z').value),
+    x: parseFloat(document.getElementById('ap-view-x').value),
+    y: parseFloat(document.getElementById('ap-view-y').value)
+  };
+  e.touched[e.slot] = true;
+  applyImageView_();
+  apUpdateEditLabels_();
+}
+function apResetView() {
+  if (!editState) return;
+  delete editState.view[editState.slot];
+  editState.touched[editState.slot] = true;
+  applyImageView_();
+  apRenderEditBar_();
+}
+// 只留下「跟預設不同」的圖片顯示設定
+function apNormalizeView_(v, slot) {
+  const out = {};
+  ['l', 'p'].forEach(function(k) {
+    const m = v && v[k]; if (!m) return;
+    const d = viewDefault_(slot, k);
+    if (Math.abs(m.z - d.z) > 0.0005 || Math.abs(m.x - d.x) > 0.0005 || Math.abs(m.y - d.y) > 0.0005) {
+      out[k] = { z: Math.round(m.z * 1000) / 1000, x: Math.round(m.x * 1000) / 1000, y: Math.round(m.y * 1000) / 1000 };
+    }
+  });
+  return Object.keys(out).length ? out : null;
 }
 function apEditInput() {
   if (!editState) return;
@@ -5341,6 +5504,7 @@ function apEditSlotChange() {
   if (!editState) return;
   editState.slot = parseInt(document.getElementById('ap-edit-slot').value, 10);
   applyBackdrop_(editState.pageId);
+  apRenderEditBar_();
 }
 function apToggleDock() { document.getElementById('ap-editbar').classList.toggle('top'); }
 
@@ -5383,9 +5547,13 @@ function apCancelEdit() { if (editState) apFinishEdit_(); }
 function apSaveEdit() {
   if (!editState) return;
   const e = editState;
-  const patch = { pageImage: {}, menu: {} };
-  patch.pageImage[e.pageId] = (e.slot === PAGE_LEVEL[e.pageId]) ? null : e.slot;
-  patch.menu[e.pageId] = apNormalizeMenu_(e.menu);
+  const patch = { imageView: {} };
+  Object.keys(e.touched).forEach(function(s) { patch.imageView[s] = apNormalizeView_(e.view[s], parseInt(s, 10)); });
+  if (!e.imageOnly) {
+    patch.pageImage = {}; patch.menu = {};
+    patch.pageImage[e.pageId] = (e.slot === PAGE_LEVEL[e.pageId]) ? null : e.slot;
+    patch.menu[e.pageId] = apNormalizeMenu_(e.menu);
+  }
   google.script.run
     .withSuccessHandler(function(res) {
       if (!res.success) { alert(res.msg || tr('ap_save_fail')); return; }
@@ -5398,7 +5566,7 @@ function apSaveEdit() {
 }
 
 function apResetAll(kind) {
-  if (!confirm(tr(kind === 'all' ? 'ap_reset_all_confirm' : 'ap_reset_pages_confirm'))) return;
+  if (!confirm(tr(kind === 'all' ? 'ap_reset_all_confirm' : (kind === 'views' ? 'ap_reset_views_confirm' : 'ap_reset_pages_confirm')))) return;
   google.script.run
     .withSuccessHandler(function(res) {
       if (!res.success) { alert(res.msg || tr('ap_save_fail')); return; }
