@@ -320,7 +320,7 @@ th { background-color: #f8f9fa; position: sticky; top: 0; }
 
 .camera-video-container {
   width: 100%;
-  height: 260px;
+  height: min(44vh, 340px);
   background-color: #000000;
   border-radius: 8px;
   overflow: hidden;
@@ -817,6 +817,15 @@ html[data-btnshape="squareR"] .menu-grid > button {
 .ap-shape-opt { cursor: pointer; border: 2px solid #ccc; border-radius: 10px; padding: 6px 8px; background: #fff; text-align: center; font-size: 12px; min-width: 76px; }
 .ap-shape-opt.sel { border-color: #00695C; background: #E0F2F1; font-weight: bold; }
 .ap-shape-sample { display: block; margin: 0 auto 4px; background: #2196F3; }
+
+
+/* 按鈕式掃描：對準後按「掃描」，像條碼槍一樣按一次讀一次 */
+.scan-bar { position: sticky; bottom: 0; background: #fff; padding: 8px 0 2px; z-index: 10; }
+.btn-scan { width: 100%; background: #2e7d32; color: #fff; padding: 18px; font-size: 20px; font-weight: bold; border-radius: 10px; }
+.btn-scan:disabled { background: #9e9e9e; }
+#scan-last { margin-top: 8px; font-size: 12px; color: #b71c1c; }
+#scan-last canvas { max-width: 100%; border: 1px solid #ccc; border-radius: 6px; display: block; margin-top: 4px; }
+.scan-res-info { font-size: 12px; color: #666; margin-top: 6px; }
 
 /* ============================================================
  * 表單頁按鈕（維持原本的統一尺寸）：同一種按鈕高度、字級、圓角一致，
@@ -1984,15 +1993,14 @@ function bgSlotCount_() {
       <p id="camera-status-text" style="margin:0; font-size:14px;"></p>
     </div>
 
-    <div class="continuous-scan-row" id="continuous-scan-row">
+    <div class="continuous-scan-row" id="continuous-scan-row" style="margin-top:6px;">
       <label style="display:flex; align-items:center; gap:6px;">
         <input type="checkbox" id="continuous-scan-toggle"> <span data-i18n="cam_continuous_label">連續掃描模式（拍完自動再開下一張）</span>
       </label>
       <span id="continuous-scan-counter" style="font-weight:bold; color:#2e7d32;"></span>
     </div>
 
-    <button type="button" class="btn-take-photo" onclick="triggerManualCapture()" data-i18n="btn_take_photo">📸 開啟相機拍照掃描</button>
-    <button type="button" class="btn-try-live" onclick="tryLivePreview()" data-i18n="btn_try_live">嘗試即時鏡頭預覽（進階／部分環境支援）</button>
+    <button type="button" class="btn-try-live" id="btn-try-live" onclick="tryLivePreview()" style="display:none;" data-i18n="btn_try_live">重新開啟鏡頭預覽</button>
 
     <div class="camera-video-container" id="live-preview-box" style="display:none;">
       <div class="scanner-guide-box"></div>
@@ -2004,7 +2012,20 @@ function bgSlotCount_() {
       <span data-i18n="cam_zoom_label">🔍 數位變焦</span>
       <input type="range" id="zoom-slider" min="1" max="1" step="0.1" value="1" oninput="applyZoom(this.value)">
     </div>
-    <button type="button" id="btn-torch" class="btn-camera-tool" onclick="toggleTorch()" style="display:none; width:100%; margin-top:8px;" data-i18n="btn_torch_label">💡 手電筒</button>
+    <div class="zoom-slider-row" id="focus-slider-row">
+      <span data-i18n="cam_focus_label">🔭 對焦距離</span>
+      <input type="range" id="focus-slider" min="0" max="1" step="0.01" value="0" oninput="applyFocusDistance(this.value)">
+    </div>
+    <div style="display:flex; gap:8px; margin-top:8px;">
+      <button type="button" id="btn-torch" class="btn-camera-tool" onclick="toggleTorch()" style="display:none;" data-i18n="btn_torch_label">💡 手電筒</button>
+      <button type="button" id="btn-focus" class="btn-camera-tool" onclick="focusAtCenter()" style="display:none;" data-i18n="btn_focus">🎯 對焦</button>
+    </div>
+    <div class="scan-res-info" id="scan-res-info"></div>
+    <div id="scan-last" style="display:none;"><div id="scan-last-text"></div><canvas id="scan-last-canvas"></canvas></div>
+    <div class="scan-bar" id="scan-bar" style="display:none;">
+      <button type="button" id="btn-scan" class="btn-scan" onclick="scanNow()" data-i18n="btn_scan">🔍 掃描</button>
+    </div>
+    <button type="button" class="btn-camera-tool" onclick="triggerManualCapture()" style="width:100%; margin-top:8px;" data-i18n="btn_take_photo">📸 改用手機相機拍照掃描（備用）</button>
 
     <input type="file" id="manual-capture-input" accept="image/*" capture="environment" style="display:none;" onchange="handleManualCaptureFile(this)">
     <div id="manual-decode-holder" style="display:none;"></div>
@@ -2390,19 +2411,29 @@ const I18N = {
     success_adjust_delete: "【操作者: {user}】\\n刪除完成！成功刪除 {n} 筆資料。",
     exception_adjust: "異動完成，但有 {n} 筆資料因已被他人異動而失敗，請重新查詢後再試一次。",
     inbound_merged_note: "（其中 {qty} 片為與既有同棧板/庫別/料號資料自動加總）",
-    cam_title: "📷 拍照條碼掃描",
-    cam_desc: "本頁面部署在獨立網站（非 Google Apps Script 內嵌頁面），支援即時鏡頭掃描：對準條碼即可自動辨識，不需每次拍照。若您的裝置/瀏覽器不支援即時預覽，可改按下方「拍照掃描」按鈕。",
-    cam_continuous_label: "連續掃描模式（拍完自動再開下一張）",
-    btn_take_photo: "📸 開啟相機拍照掃描",
-    btn_try_live: "嘗試即時鏡頭預覽（進階／部分環境支援）",
+    cam_title: "📷 條碼掃描",
+    cam_desc: "對準條碼，按下「掃描」鍵：像條碼槍一樣，按一次讀一次。條碼很小時，請把手機拿近到剛好對焦（可用「對焦」「變焦」「手電筒」），再按「掃描」。",
+    cam_continuous_label: "連續掃描模式（掃完保持相機開啟，下一個再按一次「掃描」）",
+    btn_take_photo: "📸 改用手機相機拍照掃描（備用）",
+    btn_try_live: "重新開啟鏡頭預覽",
     btn_torch_label: "💡 手電筒",
+    btn_scan: "🔍 掃描",
+    btn_scanning: "辨識中...",
+    btn_focus: "🎯 對焦",
+    cam_focus_label: "🔭 對焦距離",
+    cam_res_info: "預覽解析度：{w}×{h}",
+    cam_status_ready: "請將條碼對準綠框，按下「掃描」",
+    cam_status_scanning: "辨識中，請稍候（拍照時請拿穩）...",
+    cam_status_scanning_p: "辨識中 {p}%...",
+    cam_status_not_found: "沒有讀到條碼。請試試：① 靠近到剛好對焦（點一下畫面或按「對焦」）② 開手電筒、避開反光 ③ 把條碼放在綠框正中央，再按一次「掃描」。",
+    cam_last_shot: "照片解析度 {w}×{h}；下面是辨識時看到的中央區域（如果模糊或條碼太小，就是這裡的原因）：",
     btn_close_camera: "關閉相機",
     cam_status_default: "請點擊上方按鈕開始拍照",
     cam_status_recognizing: "正在辨識照片中的條碼，請稍候...",
     cam_status_fail: "無法辨識照片中的條碼，請對準條碼、避免反光或模糊後重新拍攝。",
-    cam_status_scanned_n: "已成功掃描 {n} 筆，請準備拍下一張條碼...",
+    cam_status_scanned_n: "已成功掃描 {n} 筆。請對準下一個條碼，再按一次「掃描」。",
     cam_status_live_trying: "正在嘗試啟動即時相機預覽...",
-    cam_status_live_ok: "即時掃描中，請將條碼對準框內...",
+    cam_status_live_ok: "請將條碼對準綠框，按下「掃描」",
     cam_status_live_ok_compat: "即時掃描中 (相容模式)，請將條碼對準框內...",
     cam_zoom_label: "🔍 數位變焦",
     cam_status_live_fail: "此環境的即時預覽被系統擋下，請改用上方「拍照掃描」按鈕（本系統主要辨識方式）。",
@@ -2858,19 +2889,29 @@ const I18N = {
     success_adjust_delete: "[Operator: {user}]\\nDeletion complete! {n} record(s) deleted successfully.",
     exception_adjust: "Adjustment complete, but {n} record(s) failed because they were changed by someone else. Please search again and retry.",
     inbound_merged_note: "({qty} pcs of which were auto-merged into an existing record with the same pallet/warehouse/part)",
-    cam_title: "📷 Photo Barcode Scan",
-    cam_desc: 'This page is hosted on an independent site (not embedded in Google Apps Script), so live camera scanning is supported: just point at the barcode and it will be recognized automatically \u2014 no need to take a photo each time. If your device/browser does not support live preview, use "Photo Scan" below instead.',
-    cam_continuous_label: "Continuous Mode (auto-reopen after each shot)",
-    btn_take_photo: "📸 Open Camera to Scan",
-    btn_try_live: "Try Live Camera Preview (Advanced / Limited support)",
+    cam_title: "📷 Barcode Scan",
+    cam_desc: "Aim at the barcode and press \"Scan\" — one press, one read, like a barcode gun. For tiny codes, move the phone close until it is in focus (use Focus / Zoom / Torch), then press Scan.",
+    cam_continuous_label: "Keep camera open after a scan (press Scan again for the next code)",
+    btn_take_photo: "📸 Use the phone camera app instead (backup)",
+    btn_try_live: "Reopen camera preview",
     btn_torch_label: "💡 Flashlight",
+    btn_scan: "🔍 Scan",
+    btn_scanning: "Reading...",
+    btn_focus: "🎯 Focus",
+    cam_focus_label: "🔭 Focus distance",
+    cam_res_info: "Preview resolution: {w}×{h}",
+    cam_status_ready: "Aim the barcode at the green box and press \"Scan\"",
+    cam_status_scanning: "Reading, please hold still...",
+    cam_status_scanning_p: "Reading {p}%...",
+    cam_status_not_found: "No barcode found. Try: (1) move closer until it is in focus (tap the screen or press Focus) (2) turn on the torch and avoid glare (3) put the code in the middle of the green box, then press Scan again.",
+    cam_last_shot: "Photo resolution {w}×{h}. Below is the centre area that was analysed (if it is blurry or the code is tiny, that is the reason):",
     btn_close_camera: "Close Camera",
     cam_status_default: "Tap the button above to start taking a photo",
     cam_status_recognizing: "Recognizing the barcode in your photo, please wait...",
     cam_status_fail: "Could not recognize the barcode in the photo. Please align it, avoid glare/blur and try again.",
-    cam_status_scanned_n: "Successfully scanned {n} item(s). Get ready for the next barcode...",
+    cam_status_scanned_n: "Scanned {n} item(s). Aim at the next barcode and press \"Scan\" again.",
     cam_status_live_trying: "Trying to start the live camera preview...",
-    cam_status_live_ok: "Live scanning, please align the barcode within the frame...",
+    cam_status_live_ok: "Aim the barcode at the green box and press \"Scan\"",
     cam_status_live_ok_compat: "Live scanning (compatibility mode), please align the barcode within the frame...",
     cam_zoom_label: "🔍 Digital Zoom",
     cam_status_live_fail: 'Live preview is blocked in this environment. Please use the "Photo Scan" button above (the main method for this system).',
@@ -3191,7 +3232,8 @@ function handleScannedResult(scannedText) {
     continuousCount++;
     updateContinuousCounter();
     setCameraStatus(tr('cam_status_scanned_n', { n: continuousCount }));
-    setTimeout(() => { triggerManualCapture(); }, 600);
+    // 連續模式：鏡頭保持開啟，對準下一個條碼後再按一次「掃描」（不會自動連續掃）
+    if (!mediaStream) setTimeout(() => { triggerManualCapture(); }, 600);
   } else {
     closeCameraModal();
   }
@@ -3205,6 +3247,9 @@ function openCameraModal(targetInputId) {
   const modal = document.getElementById("camera-modal");
   modal.style.display = "block";
   document.getElementById('btn-torch').style.display = 'none';
+  document.getElementById('btn-focus').style.display = 'none';
+  document.getElementById('focus-slider-row').style.display = 'none';
+  document.getElementById('scan-last').style.display = 'none';
   document.getElementById('live-preview-box').style.display = 'none';
   document.getElementById('zoom-slider-row').style.display = 'none';
   setCameraStatus(tr('cam_status_default'));
@@ -3222,6 +3267,15 @@ function openCameraModal(targetInputId) {
   tryLivePreview();
 }
 
+/* ============================================================
+ * 按鈕式掃描（像條碼槍：對準後按「掃描」，按一次讀一次，不會連續亂掃）
+ *  1) 開啟高解析度鏡頭預覽（盡量要求相機最高解析度）、連續自動對焦、可變焦／手電筒／對焦距離
+ *  2) 按下「掃描」才拍一張「完整解析度」的照片（ImageCapture.takePhoto；不支援時用預覽畫面）
+ *  3) 用多種方式辨識：瀏覽器原生 BarcodeDetector → ZXing（中央放大、對比增強、二值化、旋轉）
+ * 條碼很小（例如 2 mm 的 QR code）時，關鍵是「照片的實際像素」夠多：每個黑白小格至少要有 2.5～3 個像素。
+ * ============================================================ */
+var scanBusy = false;
+
 async function tryLivePreview() {
   if (!window.isSecureContext) {
     alert(tr('cam_status_live_fail'));
@@ -3229,9 +3283,10 @@ async function tryLivePreview() {
   }
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     setCameraStatus(tr('cam_status_live_unsupported'));
+    document.getElementById('btn-try-live').style.display = 'none';
     return;
   }
-
+  stopLiveStream_();
   setCameraStatus(tr('cam_status_live_trying'));
   const liveBox = document.getElementById('live-preview-box');
   liveBox.style.display = 'block';
@@ -3242,8 +3297,8 @@ async function tryLivePreview() {
       mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: { ideal: "environment" },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
+          width: { ideal: 4096 },
+          height: { ideal: 2160 },
           advanced: [{ focusMode: "continuous" }]
         }
       });
@@ -3256,30 +3311,30 @@ async function tryLivePreview() {
     }
 
     video.srcObject = mediaStream;
-
-    // 關鍵修正：務必等待 onloadedmetadata 後才 play()，避免畫面黑屏
     await new Promise((resolve) => {
-      video.onloadedmetadata = () => {
-        video.play().then(resolve).catch(resolve);
-      };
+      video.onloadedmetadata = () => { video.play().then(resolve).catch(resolve); };
     });
 
     currentTrack = mediaStream.getVideoTracks()[0];
+    let caps = {};
+    try { caps = currentTrack.getCapabilities ? currentTrack.getCapabilities() : {}; } catch (e) {}
+
+    // 盡量拉到相機能提供的最高解析度（小條碼要靠像素數量）
     try {
-      const caps = currentTrack.getCapabilities ? currentTrack.getCapabilities() : {};
-
-      if (caps && caps.torch) {
-        document.getElementById('btn-torch').style.display = 'inline-block';
+      if (caps.width && caps.height) {
+        await currentTrack.applyConstraints({ width: { ideal: caps.width.max }, height: { ideal: caps.height.max } });
       }
+    } catch (e) {}
 
-      // 嘗試強制開啟「連續自動對焦」，多數 Android 手機瀏覽器支援，
-      // 對焦不準是條碼辨識失敗最常見的原因之一
-      if (caps && caps.focusMode && caps.focusMode.indexOf('continuous') !== -1) {
+    try {
+      if (caps.torch) document.getElementById('btn-torch').style.display = 'block';
+      if (caps.focusMode && caps.focusMode.indexOf('continuous') !== -1) {
         try { await currentTrack.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }); } catch (e) {}
       }
-
-      // 若相機支援數位變焦，顯示變焦滑桿，讓使用者可手動放大遠處/細小的條碼
-      if (caps && caps.zoom && caps.zoom.max > caps.zoom.min) {
+      if (caps.focusMode && (caps.focusMode.indexOf('single-shot') !== -1 || caps.focusMode.indexOf('manual') !== -1)) {
+        document.getElementById('btn-focus').style.display = 'block';
+      }
+      if (caps.zoom && caps.zoom.max > caps.zoom.min) {
         const zoomSlider = document.getElementById('zoom-slider');
         zoomSlider.min = caps.zoom.min;
         zoomSlider.max = caps.zoom.max;
@@ -3287,88 +3342,293 @@ async function tryLivePreview() {
         zoomSlider.value = caps.zoom.min;
         document.getElementById('zoom-slider-row').style.display = 'flex';
       }
+      // 手動對焦距離：部分手機支援，近拍小條碼時可以自己調到最清楚
+      if (caps.focusDistance && caps.focusDistance.max > caps.focusDistance.min) {
+        const fs = document.getElementById('focus-slider');
+        fs.min = caps.focusDistance.min; fs.max = caps.focusDistance.max;
+        fs.step = caps.focusDistance.step || 0.01; fs.value = caps.focusDistance.min;
+        document.getElementById('focus-slider-row').style.display = 'flex';
+      }
     } catch (e) {}
 
-    // 對準框裁切用的畫布：只取綠色對準框內的畫面並放大處理，
-    // 而不是整張畫面縮小辨識，可大幅提升小條碼/遠距離的辨識成功率
-    const canvas = document.getElementById('scanner-canvas');
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    let isDetecting = false;
+    const st = currentTrack.getSettings ? currentTrack.getSettings() : {};
+    document.getElementById('scan-res-info').innerText = tr('cam_res_info', { w: st.width || video.videoWidth, h: st.height || video.videoHeight });
 
-    function captureGuideBoxFrame() {
-      const vw = video.videoWidth, vh = video.videoHeight;
-      if (!vw || !vh) return null;
-      // 對應 CSS 對準框的比例 (top 32%/left 8%/width 84%/height 36%)
-      const sx = vw * 0.08, sy = vh * 0.32, sw = vw * 0.84, sh = vh * 0.36;
-      const UPSCALE = 2; // 放大倍率，提高條碼在畫面中的有效解析度
-      canvas.width = sw * UPSCALE;
-      canvas.height = sh * UPSCALE;
-      ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
-      return canvas;
-    }
+    // 點一下預覽畫面就在該位置對焦
+    video.onclick = function(ev) {
+      const r = video.getBoundingClientRect();
+      focusAtPoint_((ev.clientX - r.left) / r.width, (ev.clientY - r.top) / r.height);
+    };
 
-    if ('BarcodeDetector' in window) {
-      setCameraStatus(tr('cam_status_live_ok'));
-      const barcodeDetector = new BarcodeDetector({
-        formats: ['code_128', 'code_39', 'code_93', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'itf', 'qr_code', 'data_matrix', 'pdf417']
-      });
-
-      scanInterval = setInterval(async () => {
-        if (isDetecting) return; // 避免上一次偵測還沒跑完就重疊觸發
-        if (video.readyState !== video.HAVE_ENOUGH_DATA) return;
-        const frame = captureGuideBoxFrame();
-        if (!frame) return;
-        isDetecting = true;
-        try {
-          const barcodes = await barcodeDetector.detect(frame);
-          if (barcodes.length > 0) {
-            handleScannedResult(barcodes[0].rawValue);
-            return;
-          }
-        } catch (e) {
-          console.error(e);
-        } finally {
-          isDetecting = false;
-        }
-      }, 280);
-
-    } else if (typeof ZXing !== 'undefined') {
-      setCameraStatus(tr('cam_status_live_ok_compat'));
-      zxingReader = new ZXing.BrowserMultiFormatReader();
-
-      // 優先使用裁切對準框＋放大後的畫面逐格解碼，比對整個 video 畫面辨識度更高；
-      // 若目前載入的 ZXing 版本不支援 decodeFromCanvas，則自動退回舊版整幀辨識方式
-      if (typeof zxingReader.decodeFromCanvas === 'function') {
-        scanInterval = setInterval(async () => {
-          if (isDetecting) return;
-          if (video.readyState !== video.HAVE_ENOUGH_DATA) return;
-          const frame = captureGuideBoxFrame();
-          if (!frame) return;
-          isDetecting = true;
-          try {
-            const result = zxingReader.decodeFromCanvas(frame);
-            if (result) handleScannedResult(result.getText());
-          } catch (e) {
-            // 找不到條碼是正常情況(NotFoundException)，忽略即可
-          } finally {
-            isDetecting = false;
-          }
-        }, 280);
-      } else {
-        zxingReader.decodeFromVideoDevice(null, 'scanner-video', (result, err) => {
-          if (result) {
-            handleScannedResult(result.getText());
-          }
-        });
-      }
-
-    } else {
-      setCameraStatus(tr('cam_status_live_unsupported'));
-    }
+    document.getElementById('scan-bar').style.display = 'block';
+    document.getElementById('btn-try-live').style.display = 'none';
+    setCameraStatus(tr('cam_status_ready'));
   } catch (err) {
     console.error("即時相機啟動錯誤:", err);
     setCameraStatus(tr('cam_status_live_fail'));
     liveBox.style.display = 'none';
+    document.getElementById('scan-bar').style.display = 'none';
+    document.getElementById('btn-try-live').style.display = 'block';
+  }
+}
+
+function stopLiveStream_() {
+  if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
+  if (zxingReader) { try { zxingReader.reset(); } catch (e) {} zxingReader = null; }
+  if (mediaStream) { mediaStream.getTracks().forEach(function(tk) { tk.stop(); }); mediaStream = null; }
+  currentTrack = null;
+  torchOn = false;
+}
+
+// 在畫面上的某個位置對焦（x、y 是 0～1 的比例）
+async function focusAtPoint_(x, y) {
+  if (!currentTrack) return;
+  try {
+    await currentTrack.applyConstraints({ advanced: [{ focusMode: 'single-shot', pointsOfInterest: [{ x: x, y: y }] }] });
+  } catch (e1) {
+    try { await currentTrack.applyConstraints({ advanced: [{ focusMode: 'single-shot' }] }); } catch (e2) {}
+  }
+  setTimeout(function() {
+    if (currentTrack) currentTrack.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(function() {});
+  }, 1800);
+}
+function focusAtCenter() { focusAtPoint_(0.5, 0.5); }
+function applyFocusDistance(v) {
+  if (!currentTrack) return;
+  currentTrack.applyConstraints({ advanced: [{ focusMode: 'manual', focusDistance: Number(v) }] }).catch(function() {});
+}
+
+/* ---------- 拍照：盡量拿到相機感光元件的完整解析度 ---------- */
+async function captureStill_() {
+  const video = document.getElementById('scanner-video');
+  if (currentTrack && window.ImageCapture) {
+    try {
+      const ic = new ImageCapture(currentTrack);
+      const settings = {};
+      try {
+        const pc = await ic.getPhotoCapabilities();
+        if (pc.imageWidth && pc.imageHeight) { settings.imageWidth = pc.imageWidth.max; settings.imageHeight = pc.imageHeight.max; }
+        if (torchOn && pc.fillLightMode && pc.fillLightMode.indexOf('flash') !== -1) settings.fillLightMode = 'flash';
+      } catch (e) {}
+      const blob = await ic.takePhoto(settings);
+      const bmp = await createImageBitmap(blob);
+      return { source: bmp, w: bmp.width, h: bmp.height, via: 'photo' };
+    } catch (e) { /* 改用預覽畫面 */ }
+  }
+  const vw = video.videoWidth, vh = video.videoHeight;
+  if (!vw || !vh) return null;
+  const c = document.createElement('canvas');
+  c.width = vw; c.height = vh;
+  c.getContext('2d').drawImage(video, 0, 0, vw, vh);
+  return { source: c, w: vw, h: vh, via: 'video' };
+}
+
+/* ---------- 辨識：多種方式依序嘗試，有時間上限 ---------- */
+function scanYield_() { return new Promise(function(r) { setTimeout(r, 0); }); }
+
+function scanCrop_(source, sw, sh, rx, ry, rw, rh, scale) {
+  const cx = Math.round(sw * rx), cy = Math.round(sh * ry);
+  const cw = Math.max(8, Math.round(sw * rw)), ch = Math.max(8, Math.round(sh * rh));
+  let s = scale;
+  const maxSide = 2400;
+  if (cw * s > maxSide || ch * s > maxSide) s = Math.min(maxSide / cw, maxSide / ch);
+  const c = document.createElement('canvas');
+  c.width = Math.max(8, Math.round(cw * s)); c.height = Math.max(8, Math.round(ch * s));
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(source, cx, cy, cw, ch, 0, 0, c.width, c.height);
+  return c;
+}
+
+function scanGray_(canvas) {
+  const w = canvas.width, h = canvas.height;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  const id = ctx.getImageData(0, 0, w, h), d = id.data;
+  const g = new Uint8ClampedArray(w * h);
+  for (let i = 0, p = 0; i < g.length; i++, p += 4) g[i] = (d[p] * 299 + d[p + 1] * 587 + d[p + 2] * 114) / 1000;
+  return { g: g, w: w, h: h, id: id, ctx: ctx };
+}
+function scanPutGray_(o, g) {
+  const d = o.id.data;
+  for (let i = 0, p = 0; i < g.length; i++, p += 4) { d[p] = d[p + 1] = d[p + 2] = g[i]; d[p + 3] = 255; }
+  o.ctx.putImageData(o.id, 0, 0);
+}
+// 對比拉伸（2%～98%）＋輕微銳化：改善偏灰、偏糊的照片
+function scanEnhance_(canvas) {
+  const o = scanGray_(canvas), g = o.g, w = o.w, h = o.h;
+  const hist = new Uint32Array(256);
+  for (let i = 0; i < g.length; i++) hist[g[i]]++;
+  const lowCut = g.length * 0.02, highCut = g.length * 0.98;
+  let acc = 0, lo = 0, hi = 255;
+  for (let v = 0; v < 256; v++) { acc += hist[v]; if (acc >= lowCut) { lo = v; break; } }
+  acc = 0;
+  for (let v = 0; v < 256; v++) { acc += hist[v]; if (acc >= highCut) { hi = v; break; } }
+  if (hi - lo < 16) { lo = Math.max(0, lo - 8); hi = Math.min(255, hi + 8); }
+  const out = new Uint8ClampedArray(g.length);
+  const k = 255 / Math.max(1, hi - lo);
+  for (let i = 0; i < g.length; i++) out[i] = (g[i] - lo) * k;
+  // unsharp：原圖 + 1.0 × (原圖 － 3×3 平均)
+  const sharp = new Uint8ClampedArray(g.length);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      if (x === 0 || y === 0 || x === w - 1 || y === h - 1) { sharp[i] = out[i]; continue; }
+      const m = (out[i - w - 1] + out[i - w] + out[i - w + 1] + out[i - 1] + out[i] + out[i + 1] + out[i + w - 1] + out[i + w] + out[i + w + 1]) / 9;
+      sharp[i] = out[i] + 1.0 * (out[i] - m);
+    }
+  }
+  scanPutGray_(o, sharp);
+  return canvas;
+}
+// 區域自適應二值化：光線不均、局部反光時比整張固定門檻好
+function scanAdaptive_(canvas) {
+  const o = scanGray_(canvas), g = o.g, w = o.w, h = o.h;
+  if (w * h > 7000000) return null;
+  const iw = w + 1;
+  const integ = new Uint32Array(iw * (h + 1));
+  for (let y = 0; y < h; y++) {
+    let row = 0;
+    for (let x = 0; x < w; x++) { row += g[y * w + x]; integ[(y + 1) * iw + (x + 1)] = integ[y * iw + (x + 1)] + row; }
+  }
+  const r = Math.max(7, Math.round(Math.min(w, h) / 12));
+  const out = new Uint8ClampedArray(g.length);
+  for (let y = 0; y < h; y++) {
+    const y0 = Math.max(0, y - r), y1 = Math.min(h - 1, y + r);
+    for (let x = 0; x < w; x++) {
+      const x0 = Math.max(0, x - r), x1 = Math.min(w - 1, x + r);
+      const n = (x1 - x0 + 1) * (y1 - y0 + 1);
+      const sum = integ[(y1 + 1) * iw + (x1 + 1)] - integ[y0 * iw + (x1 + 1)] - integ[(y1 + 1) * iw + x0] + integ[y0 * iw + x0];
+      out[y * w + x] = (g[y * w + x] * n < sum * 0.93) ? 0 : 255;
+    }
+  }
+  scanPutGray_(o, out);
+  return canvas;
+}
+function scanRotate_(canvas) {
+  const c = document.createElement('canvas');
+  c.width = canvas.height; c.height = canvas.width;
+  const ctx = c.getContext('2d');
+  ctx.translate(c.width / 2, c.height / 2);
+  ctx.rotate(Math.PI / 2);
+  ctx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+  return c;
+}
+
+var scanZxReader_ = null;
+function scanZxReaderGet_() {
+  if (scanZxReader_ || typeof ZXing === 'undefined') return scanZxReader_;
+  const B = ZXing.BarcodeFormat, hints = new Map();
+  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [B.QR_CODE, B.CODE_128, B.CODE_39, B.CODE_93, B.ITF, B.EAN_13, B.EAN_8, B.UPC_A, B.UPC_E, B.DATA_MATRIX, B.PDF_417, B.AZTEC, B.CODABAR]);
+  hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+  scanZxReader_ = new ZXing.MultiFormatReader();
+  scanZxReader_.setHints(hints);
+  return scanZxReader_;
+}
+function scanZxDecode_(canvas) {
+  const reader = scanZxReaderGet_();
+  if (!reader) return null;
+  const tryOne = function(inverted, global) {
+    try {
+      let src = new ZXing.HTMLCanvasElementLuminanceSource(canvas);
+      if (inverted) src = new ZXing.InvertedLuminanceSource(src);
+      const bin = new ZXing.BinaryBitmap(global ? new ZXing.GlobalHistogramBinarizer(src) : new ZXing.HybridBinarizer(src));
+      return reader.decode(bin).getText();
+    } catch (e) { return null; }
+  };
+  return tryOne(false, false) || tryOne(false, true) || tryOne(true, false);
+}
+
+async function decodeStill_(source, sw, sh, onProgress) {
+  const t0 = Date.now(), BUDGET = 9000;
+  // 1) 瀏覽器原生 BarcodeDetector（Android Chrome 等；通常對小 QR code 最強）
+  if ('BarcodeDetector' in window) {
+    try {
+      const want = ['qr_code', 'code_128', 'code_39', 'code_93', 'itf', 'codabar', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'data_matrix', 'pdf417', 'aztec'];
+      let formats = want;
+      if (BarcodeDetector.getSupportedFormats) {
+        const sup = await BarcodeDetector.getSupportedFormats();
+        formats = want.filter(function(f) { return sup.indexOf(f) !== -1; });
+      }
+      if (formats.length) {
+        const det = new BarcodeDetector({ formats: formats });
+        const views = [[0, 0, 1, 1, 1], [0.3, 0.3, 0.4, 0.4, 2], [0.15, 0.15, 0.7, 0.7, 1.5]];
+        for (let i = 0; i < views.length; i++) {
+          const v = views[i];
+          const src = (i === 0) ? source : scanCrop_(source, sw, sh, v[0], v[1], v[2], v[3], v[4]);
+          const r = await det.detect(src);
+          if (r && r.length) return { text: r[0].rawValue, how: 'BarcodeDetector' };
+        }
+      }
+    } catch (e) { console.warn('BarcodeDetector 失敗，改用 ZXing:', e); }
+  }
+  // 2) ZXing：由「中央小區域放大」到「全畫面」，搭配不同影像處理與旋轉
+  if (typeof ZXing === 'undefined') return null;
+  // 區域由小到大：條碼很小時，「中央小區域＋放大」最有機會；放大倍數依來源像素自動決定（已經夠大就不放大，避免白費時間）
+  const regions = [[0.4, 0.4, 0.2, 0.2], [0.3, 0.3, 0.4, 0.4], [0.08, 0.32, 0.84, 0.36], [0.15, 0.15, 0.7, 0.7], [0, 0, 1, 1]];
+  const scalesFor = function(r) {
+    const base = Math.min(sw * r[2], sh * r[3]);      // 這個區域的短邊有幾個像素
+    if (base >= 1500) return [1];
+    if (base >= 800) return [1, 1.5];
+    if (base >= 400) return [2, 1];
+    return [3, 4, 2];
+  };
+  const preps = ['raw', 'enhance', 'adaptive'];
+  let total = 0, n = 0;
+  regions.forEach(function(r) { total += scalesFor(r).length * preps.length * 2; });
+  for (let ri = 0; ri < regions.length; ri++) {
+    const r = regions[ri];
+    const scales = scalesFor(r);
+    for (let si = 0; si < scales.length; si++) {
+      const base = scanCrop_(source, sw, sh, r[0], r[1], r[2], r[3], scales[si]);
+      for (let pi = 0; pi < preps.length; pi++) {
+        let c = base;
+        if (preps[pi] !== 'raw') {
+          c = document.createElement('canvas'); c.width = base.width; c.height = base.height;
+          c.getContext('2d').drawImage(base, 0, 0);
+          if (preps[pi] === 'enhance') scanEnhance_(c);
+          else if (!scanAdaptive_(c)) { n += 2; continue; }
+        }
+        for (let rot = 0; rot < 2; rot++) {
+          n++;
+          if (onProgress) onProgress(Math.min(99, Math.round(n * 100 / total)));
+          await scanYield_();
+          const txt = scanZxDecode_(rot === 0 ? c : scanRotate_(c));
+          if (txt) return { text: txt, how: 'ZXing' };
+          if (Date.now() - t0 > BUDGET) return null;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+async function scanNow() {
+  if (scanBusy) return;
+  scanBusy = true;
+  const btn = document.getElementById('btn-scan');
+  btn.disabled = true; btn.innerText = tr('btn_scanning');
+  document.getElementById('scan-last').style.display = 'none';
+  setCameraStatus(tr('cam_status_scanning'));
+  try {
+    const shot = await captureStill_();
+    if (!shot) throw new Error('no frame');
+    const res = await decodeStill_(shot.source, shot.w, shot.h, function(p) { setCameraStatus(tr('cam_status_scanning_p', { p: p })); });
+    if (res) { handleScannedResult(res.text); return; }
+    // 沒讀到：把「演算法實際看到的中央區域」顯示出來，方便判斷是失焦、太小還是反光
+    const view = scanCrop_(shot.source, shot.w, shot.h, 0.3, 0.3, 0.4, 0.4, 1);
+    const lc = document.getElementById('scan-last-canvas');
+    const k = Math.min(1, 360 / view.width);
+    lc.width = Math.round(view.width * k); lc.height = Math.round(view.height * k);
+    lc.getContext('2d').drawImage(view, 0, 0, lc.width, lc.height);
+    document.getElementById('scan-last-text').innerText = tr('cam_last_shot', { w: shot.w, h: shot.h });
+    document.getElementById('scan-last').style.display = 'block';
+    setCameraStatus(tr('cam_status_not_found'));
+  } catch (e) {
+    console.error(e);
+    setCameraStatus(tr('cam_status_fail'));
+  } finally {
+    scanBusy = false;
+    btn.disabled = false; btn.innerText = tr('btn_scan');
   }
 }
 
@@ -3394,10 +3654,18 @@ function triggerManualCapture() {
   input.click();
 }
 
-function handleManualCaptureFile(fileInputEl) {
+async function handleManualCaptureFile(fileInputEl) {
   const file = fileInputEl.files && fileInputEl.files[0];
   if (!file) return;
   setCameraStatus(tr('cam_status_recognizing'));
+
+  // 先用跟「掃描」按鈕同一套的多種辨識方式（中央放大、對比增強、二值化、旋轉）
+  try {
+    let bmp;
+    try { bmp = await createImageBitmap(file, { imageOrientation: 'from-image' }); } catch (e0) { bmp = await createImageBitmap(file); }
+    const res = await decodeStill_(bmp, bmp.width, bmp.height, function(p) { setCameraStatus(tr('cam_status_scanning_p', { p: p })); });
+    if (res) { handleScannedResult(res.text); return; }
+  } catch (e) { console.warn('進階辨識失敗，改用原本的方式:', e); }
 
   if (typeof Html5Qrcode === 'undefined') {
     alert(tr('alert_component_loading'));
@@ -3470,24 +3738,13 @@ function retryDecodeWithCenterCrop(file) {
 }
 
 function closeCameraModal() {
-  if (scanInterval) {
-    clearInterval(scanInterval);
-    scanInterval = null;
-  }
-
-  if (zxingReader) {
-    try { zxingReader.reset(); } catch (e) {}
-    zxingReader = null;
-  }
-
-  if (mediaStream) {
-    mediaStream.getTracks().forEach(track => track.stop());
-    mediaStream = null;
-  }
-
-  currentTrack = null;
-  torchOn = false;
+  stopLiveStream_();
+  scanBusy = false;
   continuousCount = 0;
+  ['scan-bar', 'scan-last', 'focus-slider-row', 'btn-focus', 'btn-try-live'].forEach(function(id) {
+    const el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+  const ri = document.getElementById('scan-res-info'); if (ri) ri.innerText = '';
 
   const zoomRow = document.getElementById('zoom-slider-row');
   if (zoomRow) zoomRow.style.display = 'none';
