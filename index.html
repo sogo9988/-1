@@ -828,6 +828,50 @@ html[data-btnshape="squareR"] .menu-grid > button {
 .scan-res-info { font-size: 12px; color: #666; margin-top: 6px; }
 
 /* ============================================================
+ * 假勤系統：公佈欄月曆、申請表單、簽核卡片
+ * ============================================================ */
+.lv-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.lv-apply-btn { background: #F57C00; color: #fff; padding: 8px 14px; font-size: 14px; flex: none; }
+.lv-apply-btn.on { background: #B71C1C; }
+.lv-apply-hint { background: #FFF3E0; color: #E65100; border: 1px dashed #F57C00; border-radius: 10px; padding: 8px; margin-bottom: 8px; font-weight: bold; text-align: center; font-size: 14px; }
+.lv-hero { position: relative; overflow: hidden; border-radius: 14px 14px 0 0; background: #e8f1f5; }
+.lv-hero img { display: block; width: 100%; position: absolute; top: 0; left: 0; }
+.lv-ribbon { background: linear-gradient(#f9e8b2, #f3d98c); text-align: center; padding: 26px 10px; font-weight: bold; font-size: 22px; color: #5b3a29; letter-spacing: 2px; border-radius: 14px 14px 0 0; }
+.lv-panel { background: #d9eaf2; border-radius: 0 0 14px 14px; padding: 10px 8px 6px; }
+.lv-nav { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 8px; font-weight: bold; color: #4a3226; font-size: 17px; }
+.lv-nav button { background: #fff; color: #4a3226; padding: 4px 12px; font-size: 15px; }
+.lv-nav button:disabled { opacity: .35; cursor: default; }
+.lv-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.lv-wd { text-align: center; padding: 6px 0; border-radius: 8px; font-weight: bold; font-size: 14px; color: #5b3a29; background: #bcdbe6; }
+.lv-wd.we { background: #f6cfa0; }
+.lv-day { background: #fff; border-radius: 9px; min-height: 76px; padding: 3px 3px 4px; text-align: left; overflow: hidden; }
+.lv-day.we { background: #f6cfa0; }
+.lv-day.empty { background: transparent; visibility: hidden; }
+.lv-day.today { outline: 3px solid #ff7043; outline-offset: -2px; }
+.lv-day .lv-num { font-weight: bold; font-size: 14px; color: #5b3a29; }
+.lv-day .lv-name { display: block; font-size: 11px; line-height: 1.25; background: rgba(0, 150, 136, .14); color: #00574B; border-radius: 4px; padding: 1px 3px; margin-top: 2px; word-break: break-all; }
+.lv-day .lv-more { font-size: 10px; color: #777; margin-top: 2px; }
+#page-leave-board.apply .lv-day:not(.empty) { cursor: pointer; box-shadow: inset 0 0 0 2px #F57C00; }
+.lv-note { font-size: 12px; color: #557; text-align: center; margin: 6px 0 2px; }
+.lv-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, .55); z-index: 10001; align-items: center; justify-content: center; padding: 12px; }
+.lv-dialog { background: #fff; border-radius: 14px; padding: 16px; width: min(480px, 100%); max-height: 92vh; overflow: auto; text-align: left; box-shadow: 0 8px 30px rgba(0, 0, 0, .4); }
+.lv-dialog .dv-row label { width: 84px; }
+.lv-card { border: 1px solid #ddd; border-radius: 10px; padding: 8px 10px; margin: 8px 0; background: #fff; font-size: 14px; }
+.lv-card .lv-meta { color: #666; font-size: 12px; margin-top: 2px; }
+.lv-badge { display: inline-block; border-radius: 8px; padding: 1px 8px; font-size: 12px; font-weight: bold; }
+.lv-b-pending { background: #FFF3E0; color: #E65100; }
+.lv-b-approved { background: #E8F5E9; color: #2E7D32; }
+.lv-b-rejected { background: #FFEBEE; color: #C62828; }
+.lv-b-cancelled { background: #ECEFF1; color: #546E7A; }
+.lv-actions { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.lv-actions button { padding: 5px 12px; font-size: 13px; }
+.lv-type-row { display: flex; align-items: center; gap: 8px; padding: 5px 2px; border-bottom: 1px solid #eee; font-size: 14px; }
+.lv-type-row .nm { flex: 1; }
+.lv-type-row.off .nm { color: #999; text-decoration: line-through; }
+.lv-img-row { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 13px; }
+.lv-img-row .lv-hero { width: 140px; flex: none; border-radius: 8px; }
+
+/* ============================================================
  * 表單頁按鈕（維持原本的統一尺寸）：同一種按鈕高度、字級、圓角一致，
  * 動作按鈕等寬排列，手機自動變兩欄
  * ============================================================ */
@@ -945,6 +989,7 @@ function bgSlotCount_() {
 <button style="background: #6D4C41; color:white;" onclick="showPage('page-special-choice')" data-i18n="choice_special">K01特殊倉</button>
 <button style="background: #B71C1C; color:white;" onclick="showPage('page-issue-menu')" data-i18n="choice_issue">K01異常帳務區</button>
 <button style="background: #4527A0; color:white;" onclick="showPage('page-designated-menu')" data-i18n="choice_designated">指定序號工作區</button>
+<button style="background: #00897B; color:white;" onclick="goToLeaveMenu()" data-i18n="choice_leave">📅 假勤系統</button>
 <button style="background: #263238; color:white;" onclick="goToExecutorLogin()" data-i18n="choice_executor">執行者專區</button>
 </div>
 </div>
@@ -990,6 +1035,8 @@ function bgSlotCount_() {
   <button style="background:#455A64; color:white;" onclick="goToInventoryAdmin()" data-i18n="exec_menu_inventory">庫存資料維護</button>
   <button style="background:#1565C0; color:white;" onclick="goToDataView()" data-i18n="exec_menu_dataview">資料檢視與匯出</button>
   <button style="background:#00695C; color:white;" onclick="goToAppearance()" data-i18n="exec_menu_appearance">背景圖與畫面設定</button>
+  <button style="background:#AD1457; color:white;" onclick="goToLeaveApprove()" data-i18n="exec_menu_leave_approve">假勤簽核</button>
+  <button style="background:#6A1B9A; color:white;" onclick="goToLeaveSettings()" data-i18n="exec_menu_leave_settings">假勤設定（月曆圖與假別）</button>
 <button onclick="executorLogout()" style="background:#666; color:white;" data-i18n="back_home">回首頁</button>
 </div>
 </div>
@@ -1174,6 +1221,122 @@ function bgSlotCount_() {
     <button style="background:#EF6C00; color:white;" onclick="apResetView()" data-i18n="ap_edit_view_reset">這張圖還原預設</button>
     <button style="background:#666; color:white;" onclick="apCancelEdit()" data-i18n="ap_edit_cancel">取消</button>
     <button style="background:#90A4AE; color:white;" onclick="apToggleDock()" data-i18n="ap_edit_dock">調整列移到上方／下方</button>
+  </div>
+</div>
+
+<!-- 假勤系統：選單頁 -->
+<div id="page-leave-menu" class="page page-menu" data-lv="7">
+<div class="menu-box">
+<h3 data-i18n="lv_menu_title">📅 假勤系統</h3>
+<div class="menu-grid">
+  <button style="background:#00897B; color:white;" onclick="goToLeaveBoard()" data-i18n="lv_menu_board">假勤公佈欄</button>
+  <button style="background:#5E35B1; color:white;" onclick="goToLeaveMine()" data-i18n="lv_menu_mine">我的申請紀錄</button>
+  <button onclick="goHome()" style="background:#666; color:white;" data-i18n="back_home">回首頁</button>
+</div>
+</div>
+</div>
+
+<!-- 假勤系統：公佈欄（月曆）頁 -->
+<div id="page-leave-board" class="page" style="margin-top:20px; padding:46px 10px 14px;">
+  <div class="lv-bar">
+    <h3 data-i18n="lv_board_title" style="margin:0;">📅 假勤公佈欄</h3>
+    <button id="lv-apply-btn" class="lv-apply-btn" onclick="lvToggleApply()" data-i18n="lv_apply_btn">申請休假</button>
+  </div>
+  <div id="lv-apply-hint" class="lv-apply-hint" style="display:none;" data-i18n="lv_apply_hint">請點選要請假的日期</div>
+  <div id="lv-hero-box"></div>
+  <div class="lv-panel">
+    <div class="lv-nav">
+      <button id="lv-prev" onclick="lvNav(-1)">◀</button>
+      <span id="lv-month-title"></span>
+      <button id="lv-next" onclick="lvNav(1)">▶</button>
+    </div>
+    <div id="lv-grid" class="lv-grid"></div>
+    <p id="lv-range-note" class="lv-note"></p>
+  </div>
+  <div style="text-align:center; margin-top:10px;">
+    <button onclick="showPage('page-leave-menu')" style="background:#666; color:white;" data-i18n="inv_back">回上一頁</button>
+  </div>
+</div>
+
+<!-- 假勤系統：我的申請紀錄 -->
+<div id="page-leave-mine" class="page" style="text-align:center; margin-top:40px;">
+  <h3 data-i18n="lv_mine_title">📝 我的申請紀錄</h3>
+  <div style="max-width:520px; margin:0 auto; text-align:left;">
+    <div class="dv-row"><label data-i18n="lv_f_user">帳號</label><input id="lv-mine-user" autocomplete="username"></div>
+    <div class="dv-row"><label data-i18n="lv_f_pass">密碼</label><input id="lv-mine-pass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter'){lvLoadMine();}"></div>
+    <div style="margin:8px 0;"><button class="btn-std" style="background:#2196F3; color:white;" onclick="lvLoadMine()" data-i18n="lv_mine_query">查詢</button></div>
+    <div id="lv-mine-list"></div>
+  </div>
+  <br><button onclick="showPage('page-leave-menu')" style="background:#666; color:white;" data-i18n="inv_back">回上一頁</button>
+</div>
+
+<!-- 執行者專區：假勤簽核 -->
+<div id="page-executor-leave-approve" class="page" style="text-align:center; margin-top:40px;">
+  <h3 data-i18n="lv_ap_title">✅ 假勤簽核</h3>
+  <div style="max-width:640px; margin:0 auto; text-align:left;">
+    <h4 data-i18n="lv_ap_pending">待簽核</h4>
+    <div id="lv-ap-pending"></div>
+    <h4 style="margin-top:20px;" data-i18n="lv_ap_decided">最近處理過的（60 天內）</h4>
+    <div id="lv-ap-decided"></div>
+  </div>
+  <br><button onclick="showPage('page-executor-menu')" style="background:#666; color:white;" data-i18n="inv_back">回上一頁</button>
+</div>
+
+<!-- 執行者專區：假勤設定（假別、月份圖示） -->
+<div id="page-executor-leave-settings" class="page" style="text-align:center; margin-top:40px;">
+  <h3 data-i18n="lv_st_title">🛠️ 假勤設定</h3>
+  <div style="max-width:640px; margin:0 auto; text-align:left;">
+    <h4 data-i18n="lv_types_title">🏷️ 假別</h4>
+    <div id="lv-types-list"></div>
+    <div class="dv-row" style="margin-top:8px;">
+      <input id="lv-type-new" maxlength="20" placeholder="">
+      <button class="btn-std" style="background:#2E7D32; color:white; flex:none;" onclick="lvAddType()" data-i18n="lv_type_add">新增假別</button>
+    </div>
+
+    <hr style="margin:20px 0;">
+    <h4 data-i18n="lv_img_title">🖼️ 月份圖示</h4>
+    <p style="font-size:13px; color:#666;" data-i18n="lv_img_hint">選一個月份、選一張圖片上傳（自動轉成 WebP）。「顯示上方比例」是只取圖片由上往下多少比例當公佈欄的標題圖（例如只要上方的插圖，就不要把下方的月曆格子也顯示出來）。</p>
+    <div class="dv-row"><label data-i18n="lv_img_month">月份</label><input type="month" id="lv-img-month" placeholder="YYYY-MM"></div>
+    <div class="dv-row"><label></label><input type="file" id="lv-img-file" accept="image/*" onchange="lvImgChosen(this)"></div>
+    <div id="lv-img-preview-wrap" style="display:none;">
+      <div class="dv-row"><label data-i18n="lv_img_crop">顯示上方比例</label>
+        <input type="range" id="lv-img-crop" min="0.15" max="1" step="0.005" value="0.412" oninput="lvImgCropInput()"><span id="lv-img-crop-v" style="width:44px; text-align:right;"></span></div>
+      <div id="lv-img-preview" class="lv-hero" data-crop="0.412"></div>
+      <div style="margin:8px 0;"><button class="btn-std" style="background:#1565C0; color:white;" onclick="lvImgUpload()" data-i18n="lv_img_upload">上傳</button></div>
+    </div>
+    <p id="lv-img-status" style="color:#00695C; font-size:14px; min-height:18px;"></p>
+    <div id="lv-img-list"></div>
+  </div>
+  <br><button onclick="showPage('page-executor-menu')" style="background:#666; color:white;" data-i18n="inv_back">回上一頁</button>
+</div>
+
+<!-- 假勤：申請休假表單（點日期後跳出） -->
+<div id="lv-modal" class="lv-overlay" style="display:none;">
+  <div class="lv-dialog">
+    <h4 data-i18n="lv_form_title" style="margin-top:0;">申請休假</h4>
+    <div class="dv-row"><label data-i18n="lv_f_user">帳號</label><input id="lv-f-user" autocomplete="username"></div>
+    <div class="dv-row"><label data-i18n="lv_f_pass">密碼</label><input id="lv-f-pass" type="password" autocomplete="current-password"></div>
+    <div class="dv-row"><label data-i18n="lv_f_name">姓名</label><input id="lv-f-name" maxlength="20"></div>
+    <div class="dv-row"><label data-i18n="lv_f_type">假別</label><select id="lv-f-type"></select></div>
+    <div class="dv-row"><label data-i18n="lv_f_start">開始日期</label><input type="date" id="lv-f-start"></div>
+    <div class="dv-row"><label data-i18n="lv_f_end">結束日期</label><input type="date" id="lv-f-end"></div>
+    <div class="dv-row"><label data-i18n="lv_f_days">DAY（天）</label><input type="number" id="lv-f-days" min="0" max="60" step="0.5" value="1"></div>
+    <div class="dv-row"><label data-i18n="lv_f_hours">H（小時）</label><input type="number" id="lv-f-hours" min="0" max="999" step="0.5" value="0"></div>
+    <div class="dv-row"><label data-i18n="lv_f_reason">事由（選填）</label><input id="lv-f-reason" maxlength="100"></div>
+    <p style="font-size:12px; color:#666; margin:6px 0;" data-i18n="lv_f_hint">天數、時數自行填寫，例如 1 DAY 0 H ＝ 全天；0 DAY 4 H ＝ 4 小時。</p>
+    <div style="display:flex; gap:8px; margin-top:10px;">
+      <button class="btn-std" id="lv-submit-btn" style="background:#2E7D32; color:white;" onclick="lvSubmit()" data-i18n="lv_submit">送出申請</button>
+      <button class="btn-std" style="background:#666; color:white;" onclick="lvCloseForm()" data-i18n="lv_cancel">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- 假勤：某一天的休假名單 -->
+<div id="lv-day-modal" class="lv-overlay" style="display:none;" onclick="if(event.target===this)lvCloseDay()">
+  <div class="lv-dialog">
+    <h4 id="lv-day-title" style="margin-top:0;"></h4>
+    <div id="lv-day-list"></div>
+    <div style="margin-top:12px;"><button class="btn-std" style="background:#666; color:white;" onclick="lvCloseDay()" data-i18n="lv_close">關閉</button></div>
   </div>
 </div>
 
@@ -2140,6 +2303,88 @@ const I18N = {
     exec_menu_inventory: "庫存資料維護",
     exec_menu_appearance: "背景圖與畫面設定",
     exec_menu_dataview: "資料檢視與匯出",
+    choice_leave: "📅 假勤系統",
+    exec_menu_leave_approve: "假勤簽核",
+    exec_menu_leave_settings: "假勤設定（月曆圖與假別）",
+    lv_menu_title: "📅 假勤系統",
+    lv_menu_board: "假勤公佈欄",
+    lv_menu_mine: "我的申請紀錄",
+    lv_board_title: "📅 假勤公佈欄",
+    lv_apply_btn: "申請休假",
+    lv_apply_cancel: "取消申請",
+    lv_apply_hint: "請點選要請假的日期",
+    lv_month_title: "{y}年{m}月",
+    lv_wd_0: "周日",
+    lv_wd_1: "周一",
+    lv_wd_2: "周二",
+    lv_wd_3: "周三",
+    lv_wd_4: "周四",
+    lv_wd_5: "周五",
+    lv_wd_6: "周六",
+    lv_range_note: "線上可查閱 {min} 到 {max}（本月前後各 2 個月）。公佈欄只顯示已核准的休假名單。",
+    lv_loading: "讀取中...",
+    lv_err_load: "讀取失敗",
+    lv_day_title: "{date} 休假名單",
+    lv_day_none: "這天沒有人休假",
+    lv_close: "關閉",
+    lv_cancel: "取消",
+    lv_form_title: "申請休假",
+    lv_f_user: "帳號",
+    lv_f_pass: "密碼",
+    lv_f_name: "姓名",
+    lv_f_type: "假別",
+    lv_f_start: "開始日期",
+    lv_f_end: "結束日期",
+    lv_f_days: "DAY（天）",
+    lv_f_hours: "H（小時）",
+    lv_f_reason: "事由（選填）",
+    lv_reason_label: "事由",
+    lv_f_hint: "天數、時數自行填寫，例如 1 DAY 0 H ＝ 全天；0 DAY 4 H ＝ 4 小時。連續多天請改「結束日期」。",
+    lv_submit: "送出申請",
+    lv_submitted: "已送出申請！待執行者簽核後，姓名會出現在假勤公佈欄。",
+    lv_submit_fail: "送出失敗",
+    lv_need_login: "請輸入帳號與密碼！",
+    lv_need_name: "請輸入姓名（公佈欄上會顯示）！",
+    lv_need_date: "請選擇開始日期！",
+    lv_bad_range: "結束日期不能早於開始日期！",
+    lv_need_amount: "請輸入休假的天數（DAY）或時數（H）！",
+    lv_days_hours: "{d} DAY {h} H",
+    lv_mine_title: "📝 我的申請紀錄",
+    lv_mine_query: "查詢",
+    lv_mine_none: "還沒有任何申請紀錄",
+    lv_status_pending: "待簽核",
+    lv_status_approved: "已核准",
+    lv_status_rejected: "已退回",
+    lv_status_cancelled: "已取消",
+    lv_note_label: "備註",
+    lv_decided_at: "處理時間",
+    lv_cancel_req: "取消申請",
+    lv_cancel_confirm: "確定要取消這筆申請嗎？",
+    lv_ap_title: "✅ 假勤簽核",
+    lv_ap_pending: "待簽核",
+    lv_ap_decided: "最近處理過的（60 天內）",
+    lv_ap_none: "目前沒有待簽核的申請",
+    lv_approve: "核准",
+    lv_reject: "退回",
+    lv_revoke: "撤銷（從公佈欄移除）",
+    lv_note_prompt: "備註（選填，可直接按確定）：",
+    lv_st_title: "🛠️ 假勤設定",
+    lv_types_title: "🏷️ 假別",
+    lv_type_add: "新增假別",
+    lv_type_enable: "啟用",
+    lv_type_disable: "停用",
+    lv_img_title: "🖼️ 月份圖示",
+    lv_img_hint: "選一個月份、選一張圖片上傳（自動轉成 WebP）。「顯示上方比例」是只取圖片由上往下多少比例當公佈欄的標題圖（例如只要上方的插圖，就不要把下方的月曆格子也顯示出來）。",
+    lv_img_month: "月份",
+    lv_img_crop: "顯示上方比例",
+    lv_img_upload: "上傳",
+    lv_img_builtin: "內建預設圖",
+    lv_img_delete: "刪除",
+    lv_img_delete_confirm: "確定要刪除 {m} 的圖示嗎？（會改回預設）",
+    lv_img_converted: "已轉換：{type}，{w}×{h}，約 {kb} KB",
+    lv_img_need_month: "請選擇月份（格式 YYYY-MM）！",
+    lv_img_need_file: "請先選擇圖片！",
+    lv_img_uploaded: "已上傳！",
     dv_title: "📊 資料檢視與匯出",
     dv_dataset: "資料",
     dv_ds_inventory: "庫存總表",
@@ -2618,6 +2863,88 @@ const I18N = {
     exec_menu_inventory: "Inventory Data Maintenance",
     exec_menu_appearance: "Backgrounds & Layout",
     exec_menu_dataview: "Data View & Export",
+    choice_leave: "📅 Leave System",
+    exec_menu_leave_approve: "Leave Approvals",
+    exec_menu_leave_settings: "Leave Settings (month images & types)",
+    lv_menu_title: "📅 Leave System",
+    lv_menu_board: "Leave Board",
+    lv_menu_mine: "My Requests",
+    lv_board_title: "📅 Leave Board",
+    lv_apply_btn: "Request Leave",
+    lv_apply_cancel: "Cancel Request",
+    lv_apply_hint: "Tap the date you want to take leave",
+    lv_month_title: "{m}/{y}",
+    lv_wd_0: "Sun",
+    lv_wd_1: "Mon",
+    lv_wd_2: "Tue",
+    lv_wd_3: "Wed",
+    lv_wd_4: "Thu",
+    lv_wd_5: "Fri",
+    lv_wd_6: "Sat",
+    lv_range_note: "Viewable online: {min} to {max} (2 months before and after this month). Only approved leave is shown.",
+    lv_loading: "Loading...",
+    lv_err_load: "Failed to load",
+    lv_day_title: "Leave on {date}",
+    lv_day_none: "Nobody is on leave this day",
+    lv_close: "Close",
+    lv_cancel: "Cancel",
+    lv_form_title: "Request Leave",
+    lv_f_user: "Account",
+    lv_f_pass: "Password",
+    lv_f_name: "Name",
+    lv_f_type: "Leave type",
+    lv_f_start: "Start date",
+    lv_f_end: "End date",
+    lv_f_days: "DAY",
+    lv_f_hours: "H (hours)",
+    lv_f_reason: "Reason (optional)",
+    lv_reason_label: "Reason",
+    lv_f_hint: "Enter days and hours yourself, e.g. 1 DAY 0 H = a full day; 0 DAY 4 H = 4 hours. For several days in a row, change the end date.",
+    lv_submit: "Submit",
+    lv_submitted: "Request sent! Your name will appear on the leave board after an executor approves it.",
+    lv_submit_fail: "Submit failed",
+    lv_need_login: "Please enter your account and password!",
+    lv_need_name: "Please enter your name (it is shown on the board)!",
+    lv_need_date: "Please choose the start date!",
+    lv_bad_range: "The end date cannot be earlier than the start date!",
+    lv_need_amount: "Please enter the leave amount in days (DAY) or hours (H)!",
+    lv_days_hours: "{d} DAY {h} H",
+    lv_mine_title: "📝 My Requests",
+    lv_mine_query: "Search",
+    lv_mine_none: "No requests yet",
+    lv_status_pending: "Pending",
+    lv_status_approved: "Approved",
+    lv_status_rejected: "Rejected",
+    lv_status_cancelled: "Cancelled",
+    lv_note_label: "Note",
+    lv_decided_at: "Decided",
+    lv_cancel_req: "Cancel request",
+    lv_cancel_confirm: "Cancel this request?",
+    lv_ap_title: "✅ Leave Approvals",
+    lv_ap_pending: "Pending",
+    lv_ap_decided: "Recently decided (last 60 days)",
+    lv_ap_none: "No pending requests",
+    lv_approve: "Approve",
+    lv_reject: "Reject",
+    lv_revoke: "Revoke (remove from board)",
+    lv_note_prompt: "Note (optional, just press OK to skip):",
+    lv_st_title: "🛠️ Leave Settings",
+    lv_types_title: "🏷️ Leave Types",
+    lv_type_add: "Add type",
+    lv_type_enable: "Enable",
+    lv_type_disable: "Disable",
+    lv_img_title: "🖼️ Month Images",
+    lv_img_hint: "Pick a month and upload a picture (converted to WebP). \"Top portion shown\" is how much of the picture, from the top, is used as the board header (e.g. only the illustration, not the calendar grid drawn below it).",
+    lv_img_month: "Month",
+    lv_img_crop: "Top portion shown",
+    lv_img_upload: "Upload",
+    lv_img_builtin: "built-in default",
+    lv_img_delete: "Delete",
+    lv_img_delete_confirm: "Delete the image of {m}? (the default is used again)",
+    lv_img_converted: "Converted: {type}, {w}×{h}, about {kb} KB",
+    lv_img_need_month: "Please choose a month (YYYY-MM)!",
+    lv_img_need_file: "Please choose a picture first!",
+    lv_img_uploaded: "Uploaded!",
     dv_title: "📊 Data View & Export",
     dv_dataset: "Data",
     dv_ds_inventory: "Inventory",
@@ -3790,7 +4117,7 @@ var editState = null;
 var viewFrame_ = null;   // 圖片在電腦橫式的實際顯示範圍（有自訂大小／位置時才有值）   // 「畫面設定」調整中的暫存狀態（null＝沒有在調整）
 const PAGE_LEVEL = {
   // 第 1 張（lv1.webp）DOA 大門
-  'page-welcome': 1, 'page-executor-login': 1, 'page-executor-menu': 1, 'page-executor-region': 1, 'page-executor-changelog': 1, 'page-executor-inventory': 1, 'page-executor-appearance': 1, 'page-executor-data': 1,
+  'page-welcome': 1, 'page-executor-login': 1, 'page-executor-menu': 1, 'page-executor-region': 1, 'page-executor-changelog': 1, 'page-executor-inventory': 1, 'page-executor-appearance': 1, 'page-executor-data': 1, 'page-executor-leave-approve': 1, 'page-executor-leave-settings': 1,
   // 第 2 張（lv2.webp）火鍋
   'page-choice': 2, 'page-designated-menu': 2, 'page-designated-upload': 2, 'page-designated-scan': 2, 'page-success': 2,
   // 第 3 張（lv3.webp）烤肉
@@ -3802,7 +4129,7 @@ const PAGE_LEVEL = {
   // 第 6 張（lv6.webp）團團圓圓
   'page-batch-upload': 6, 'page-batch-confirm': 6, 'page-query-inventory': 6,
   // 第 7 張（lv7.webp）樹葉右
-  'page-query-choice': 7, 'page-query-empty-pallet': 7, 'page-query-sn': 7,
+  'page-query-choice': 7, 'page-leave-menu': 7, 'page-leave-board': 7, 'page-leave-mine': 7, 'page-query-empty-pallet': 7, 'page-query-sn': 7,
   // 第 8 張（lv8.webp）溫泉
   'page-special-choice': 8, 'page-special-inbound-choice': 8, 'page-special-outbound-choice': 8, 'page-special-sn': 8, 'page-special-part': 8, 'page-special-reason': 8,
   // 第 9 張（lv9.webp）墨鏡貓 NG
@@ -5350,6 +5677,454 @@ function goToRegionManage() {
   document.getElementById('exec-new-limit').value = '';
   showPage('page-executor-region');
   loadRegionManageList();
+}
+
+/* ============================================================
+ * 假勤系統
+ *  - 公佈欄：以月曆顯示「已核准」的休假名單；線上可查閱 2026/11 起、本月前後各 2 個月（由資料庫決定）
+ *  - 申請：公佈欄右上角「申請休假」→ 點日期 → 填表（假別、DAY、H）→ 送出後待執行者簽核
+ *  - 執行者：假勤簽核、假別管理、每個月份的標題圖
+ * ============================================================ */
+var lvState = { month: '', data: null, apply: false, types: [] };
+const LV_DEFAULT_IMAGES = { '2026-11': { file: 'leave_2026-11.webp', crop: 0.412 } };   // 內建的 11 月圖（放在 GitHub 倉庫根目錄）
+const LV_MONTH_ZH = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+const LV_MONTH_EN = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+function lvPad_(n) { return String(n).padStart(2, '0'); }
+function lvNum_(v) { const n = Number(v); return isFinite(n) ? n : 0; }
+function lvAmount_(d, h) { return tr('lv_days_hours', { d: lvNum_(d), h: lvNum_(h) }); }
+function lvRange_(s, e) { return s === e ? s : s + ' ~ ' + e; }
+function lvLastDay_(ym) { const p = ym.split('-').map(Number); return ym + '-' + lvPad_(new Date(p[0], p[1], 0).getDate()); }
+
+function goToLeaveMenu() { showPage('page-leave-menu'); }
+
+/* ---------- 公佈欄 ---------- */
+function goToLeaveBoard() {
+  lvState.apply = false;
+  lvApplyUi_();
+  showPage('page-leave-board');
+  lvLoad('');
+}
+function lvLoad(month) {
+  const note = document.getElementById('lv-range-note');
+  note.innerText = tr('lv_loading');
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res.success) { note.innerText = res.msg || ''; if (!lvState.data) lvRenderGrid_(null); return; }
+      lvState.data = res;
+      lvState.month = res.month;
+      lvRender_();
+    })
+    .withFailureHandler(function(err) { note.innerText = tr('lv_err_load') + '：' + err.message; })
+    .getLeaveCalendar(month);
+}
+function lvNav(delta) {
+  if (!lvState.month) return;
+  const p = lvState.month.split('-').map(Number);
+  const d = new Date(p[0], p[1] - 1 + delta, 1);
+  lvLoad(d.getFullYear() + '-' + lvPad_(d.getMonth() + 1));
+}
+function lvRender_() {
+  const data = lvState.data;
+  if (!data) return;
+  const p = data.month.split('-').map(Number);
+  document.getElementById('lv-month-title').innerText = tr('lv_month_title', { y: p[0], m: p[1] });
+  document.getElementById('lv-prev').disabled = data.month <= data.minMonth;
+  document.getElementById('lv-next').disabled = data.month >= data.maxMonth;
+  document.getElementById('lv-range-note').innerText = tr('lv_range_note', { min: data.minMonth, max: data.maxMonth });
+  lvRenderHero_(data);
+  lvRenderGrid_(data);
+  lvFitAll_();
+}
+function lvFitHero_(wrap) {
+  const img = wrap.querySelector('img');
+  if (!img || !img.naturalWidth || !wrap.clientWidth) return;
+  const crop = parseFloat(wrap.dataset.crop || '1') || 1;
+  wrap.style.height = Math.round(wrap.clientWidth * img.naturalHeight / img.naturalWidth * crop) + 'px';
+}
+function lvFitAll_() { document.querySelectorAll('.lv-hero').forEach(lvFitHero_); }
+window.addEventListener('resize', lvFitAll_);
+
+function lvRibbon_(data) {
+  const p = data.month.split('-').map(Number);
+  return apEl_('div', 'lv-ribbon', LV_MONTH_ZH[p[1] - 1] + '  ' + LV_MONTH_EN[p[1] - 1] + ' ' + p[0]);
+}
+function lvRenderHero_(data) {
+  const box = document.getElementById('lv-hero-box');
+  box.innerHTML = '';
+  let url = null, crop = 0.412;
+  if (data.image && data.image.url) { url = data.image.url; crop = Number(data.image.crop) || 0.412; }
+  else if (LV_DEFAULT_IMAGES[data.month]) { url = BG_BASE + LV_DEFAULT_IMAGES[data.month].file; crop = LV_DEFAULT_IMAGES[data.month].crop; }
+  if (!url) { box.appendChild(lvRibbon_(data)); return; }
+  const wrap = apEl_('div', 'lv-hero');
+  wrap.dataset.crop = String(crop);
+  const img = new Image();
+  img.alt = '';
+  img.onload = function() { lvFitHero_(wrap); };
+  img.onerror = function() { box.innerHTML = ''; box.appendChild(lvRibbon_(data)); };
+  img.src = url;
+  wrap.appendChild(img);
+  box.appendChild(wrap);
+}
+function lvLabel_(l) {
+  return (lvNum_(l.days) === 0 && lvNum_(l.hours) > 0) ? l.name + '(' + lvNum_(l.hours) + 'H)' : l.name;
+}
+function lvRenderGrid_(data) {
+  const grid = document.getElementById('lv-grid');
+  grid.innerHTML = '';
+  if (!data) return;
+  for (let i = 0; i < 7; i++) grid.appendChild(apEl_('div', 'lv-wd' + ((i === 0 || i === 6) ? ' we' : ''), tr('lv_wd_' + i)));
+  const p = data.month.split('-').map(Number);
+  const first = new Date(p[0], p[1] - 1, 1).getDay(), dim = new Date(p[0], p[1], 0).getDate();
+  const now = new Date();
+  const todayStr = now.getFullYear() + '-' + lvPad_(now.getMonth() + 1) + '-' + lvPad_(now.getDate());
+  for (let i = 0; i < first; i++) grid.appendChild(apEl_('div', 'lv-day empty'));
+  for (let d = 1; d <= dim; d++) {
+    const ds = data.month + '-' + lvPad_(d);
+    const dow = (first + d - 1) % 7;
+    const cell = apEl_('div', 'lv-day' + ((dow === 0 || dow === 6) ? ' we' : '') + (ds === todayStr ? ' today' : ''));
+    cell.appendChild(apEl_('div', 'lv-num', String(d)));
+    const names = (data.leaves || []).filter(function(l) { return l.start <= ds && l.end >= ds; });
+    names.slice(0, 3).forEach(function(l) { cell.appendChild(apEl_('span', 'lv-name', lvLabel_(l))); });
+    if (names.length > 3) cell.appendChild(apEl_('div', 'lv-more', '+' + (names.length - 3)));
+    cell.onclick = function() { if (lvState.apply) lvOpenForm(ds); else lvOpenDay(ds, names); };
+    grid.appendChild(cell);
+  }
+  const tail = (7 - (first + dim) % 7) % 7;
+  for (let i = 0; i < tail; i++) grid.appendChild(apEl_('div', 'lv-day empty'));
+}
+
+function lvToggleApply() { lvState.apply = !lvState.apply; lvApplyUi_(); }
+function lvApplyUi_() {
+  const btn = document.getElementById('lv-apply-btn');
+  btn.classList.toggle('on', lvState.apply);
+  btn.innerText = tr(lvState.apply ? 'lv_apply_cancel' : 'lv_apply_btn');
+  document.getElementById('lv-apply-hint').style.display = lvState.apply ? 'block' : 'none';
+  document.getElementById('page-leave-board').classList.toggle('apply', lvState.apply);
+}
+
+function lvOpenDay(ds, names) {
+  document.getElementById('lv-day-title').innerText = tr('lv_day_title', { date: ds });
+  const box = document.getElementById('lv-day-list');
+  box.innerHTML = '';
+  if (!names.length) box.appendChild(apEl_('div', '', tr('lv_day_none')));
+  names.forEach(function(l) {
+    const partial = lvNum_(l.days) === 0 && lvNum_(l.hours) > 0;
+    box.appendChild(apEl_('div', 'lv-card', l.name + (partial ? '（' + lvNum_(l.hours) + ' H）' : '')));
+  });
+  document.getElementById('lv-day-modal').style.display = 'flex';
+}
+function lvCloseDay() { document.getElementById('lv-day-modal').style.display = 'none'; }
+
+/* ---------- 申請表單 ---------- */
+function lvEnsureTypes_(cb) {
+  if (lvState.types.length) { cb(); return; }
+  google.script.run
+    .withSuccessHandler(function(res) { lvState.types = (res && res.types) || []; cb(); })
+    .withFailureHandler(function(err) { alert(tr('lv_err_load') + '：' + err.message); })
+    .getLeaveTypes();
+}
+function lvOpenForm(ds) {
+  lvEnsureTypes_(function() {
+    const sel = document.getElementById('lv-f-type');
+    sel.innerHTML = '';
+    lvState.types.forEach(function(n) { const o = document.createElement('option'); o.value = n; o.textContent = n; sel.appendChild(o); });
+    const d = lvState.data;
+    ['lv-f-start', 'lv-f-end'].forEach(function(id) {
+      const el = document.getElementById(id);
+      el.min = d.minMonth + '-01'; el.max = lvLastDay_(d.maxMonth); el.value = ds;
+    });
+    let u = '', nm = '';
+    try { u = localStorage.getItem('k01_leave_user') || ''; nm = localStorage.getItem('k01_leave_name') || ''; } catch (e) {}
+    document.getElementById('lv-f-user').value = u;
+    document.getElementById('lv-f-pass').value = '';
+    document.getElementById('lv-f-name').value = nm;
+    document.getElementById('lv-f-days').value = 1;
+    document.getElementById('lv-f-hours').value = 0;
+    document.getElementById('lv-f-reason').value = '';
+    document.getElementById('lv-submit-btn').disabled = false;
+    document.getElementById('lv-modal').style.display = 'flex';
+  });
+}
+function lvCloseForm() { document.getElementById('lv-modal').style.display = 'none'; }
+function lvSubmit() {
+  const v = function(id) { return document.getElementById(id).value.trim(); };
+  const payload = {
+    username: v('lv-f-user'), password: v('lv-f-pass'), name: v('lv-f-name'), type: v('lv-f-type'),
+    startDate: v('lv-f-start'), endDate: v('lv-f-end') || v('lv-f-start'),
+    days: v('lv-f-days') || '0', hours: v('lv-f-hours') || '0', reason: v('lv-f-reason')
+  };
+  if (!payload.username || !payload.password) { alert(tr('lv_need_login')); return; }
+  if (!payload.name) { alert(tr('lv_need_name')); return; }
+  if (!payload.startDate) { alert(tr('lv_need_date')); return; }
+  if (payload.endDate < payload.startDate) { alert(tr('lv_bad_range')); return; }
+  if (lvNum_(payload.days) === 0 && lvNum_(payload.hours) === 0) { alert(tr('lv_need_amount')); return; }
+  const btn = document.getElementById('lv-submit-btn');
+  btn.disabled = true;
+  google.script.run
+    .withSuccessHandler(function(res) {
+      btn.disabled = false;
+      if (!res.success) { alert(res.msg || tr('lv_submit_fail')); return; }
+      try { localStorage.setItem('k01_leave_user', payload.username); localStorage.setItem('k01_leave_name', payload.name); } catch (e) {}
+      lvCloseForm();
+      lvState.apply = false; lvApplyUi_();
+      alert(tr('lv_submitted'));
+    })
+    .withFailureHandler(function(err) { btn.disabled = false; alert(tr('lv_submit_fail') + '：' + err.message); })
+    .submitLeaveRequest(payload);
+}
+
+/* ---------- 我的申請紀錄 ---------- */
+function goToLeaveMine() {
+  let u = '';
+  try { u = localStorage.getItem('k01_leave_user') || ''; } catch (e) {}
+  document.getElementById('lv-mine-user').value = u;
+  document.getElementById('lv-mine-pass').value = '';
+  document.getElementById('lv-mine-list').innerHTML = '';
+  showPage('page-leave-mine');
+}
+function lvReqCard_(r, opts) {
+  const card = apEl_('div', 'lv-card');
+  const top = apEl_('div', '');
+  top.appendChild(apEl_('b', '', (opts.showUser ? r.name + '（' + r.user + '）　' : '') + r.type + '　'));
+  top.appendChild(apEl_('span', 'lv-badge lv-b-' + r.status, tr('lv_status_' + r.status)));
+  card.appendChild(top);
+  card.appendChild(apEl_('div', '', lvRange_(r.start, r.end) + '　' + lvAmount_(r.days, r.hours)));
+  const meta = [];
+  if (r.reason) meta.push(tr('lv_reason_label') + '：' + r.reason);
+  if (r.created) meta.push(r.created);
+  if (r.note) meta.push(tr('lv_note_label') + '：' + r.note);
+  if (r.decided) meta.push(tr('lv_decided_at') + ' ' + r.decided + (r.by ? '（' + r.by + '）' : ''));
+  if (meta.length) card.appendChild(apEl_('div', 'lv-meta', meta.join('　·　')));
+  return card;
+}
+function lvLoadMine() {
+  const u = document.getElementById('lv-mine-user').value.trim(), p = document.getElementById('lv-mine-pass').value.trim();
+  if (!u || !p) { alert(tr('lv_need_login')); return; }
+  const box = document.getElementById('lv-mine-list');
+  box.innerText = tr('lv_loading');
+  google.script.run
+    .withSuccessHandler(function(res) {
+      box.innerHTML = '';
+      if (!res.success) { box.innerText = res.msg || ''; return; }
+      try { localStorage.setItem('k01_leave_user', u); } catch (e) {}
+      if (!res.list.length) { box.appendChild(apEl_('div', 'lv-card', tr('lv_mine_none'))); return; }
+      res.list.forEach(function(r) {
+        const card = lvReqCard_(r, { showUser: false });
+        if (r.status === 'pending') {
+          const act = apEl_('div', 'lv-actions');
+          const b = apEl_('button', '', tr('lv_cancel_req'));
+          b.style.background = '#B71C1C'; b.style.color = 'white';
+          b.onclick = function() {
+            if (!confirm(tr('lv_cancel_confirm'))) return;
+            google.script.run
+              .withSuccessHandler(function(r2) { if (!r2.success) { alert(r2.msg || ''); return; } lvLoadMine(); })
+              .withFailureHandler(function(err) { alert(err.message); })
+              .cancelMyLeaveRequest(r.id, u, p);
+          };
+          act.appendChild(b); card.appendChild(act);
+        }
+        box.appendChild(card);
+      });
+    })
+    .withFailureHandler(function(err) { box.innerText = err.message; })
+    .getMyLeaveRequests(u, p);
+}
+
+/* ---------- 執行者：簽核 ---------- */
+function goToLeaveApprove() { showPage('page-executor-leave-approve'); lvApLoad_(); }
+function lvApLoad_() {
+  const pb = document.getElementById('lv-ap-pending'), db = document.getElementById('lv-ap-decided');
+  pb.innerText = tr('lv_loading'); db.innerHTML = '';
+  google.script.run
+    .withSuccessHandler(function(res) {
+      pb.innerHTML = '';
+      if (!res.success) { pb.innerText = res.msg || ''; return; }
+      if (!res.pending.length) pb.appendChild(apEl_('div', 'lv-card', tr('lv_ap_none')));
+      res.pending.forEach(function(r) {
+        r.status = 'pending';
+        const card = lvReqCard_(r, { showUser: true });
+        const act = apEl_('div', 'lv-actions');
+        const ok = apEl_('button', '', tr('lv_approve')); ok.style.background = '#2E7D32'; ok.style.color = 'white';
+        ok.onclick = function() { lvDecide_(r.id, 'approved'); };
+        const no = apEl_('button', '', tr('lv_reject')); no.style.background = '#C62828'; no.style.color = 'white';
+        no.onclick = function() { lvDecide_(r.id, 'rejected'); };
+        act.appendChild(ok); act.appendChild(no); card.appendChild(act);
+        pb.appendChild(card);
+      });
+      res.done.forEach(function(r) {
+        const card = lvReqCard_(r, { showUser: true });
+        if (r.status === 'approved') {
+          const act = apEl_('div', 'lv-actions');
+          const b = apEl_('button', '', tr('lv_revoke')); b.style.background = '#EF6C00'; b.style.color = 'white';
+          b.onclick = function() { lvDecide_(r.id, 'cancelled'); };
+          act.appendChild(b); card.appendChild(act);
+        }
+        db.appendChild(card);
+      });
+    })
+    .withFailureHandler(function(err) { pb.innerText = err.message; })
+    .adminListLeaveRequests(currentExecutorUser, currentExecutorPass);
+}
+function lvDecide_(id, decision) {
+  let note = '';
+  if (decision !== 'approved') {
+    note = prompt(tr('lv_note_prompt'), '');
+    if (note === null) return;
+  }
+  google.script.run
+    .withSuccessHandler(function(res) { if (!res.success) { alert(res.msg || ''); } lvApLoad_(); })
+    .withFailureHandler(function(err) { alert(err.message); })
+    .adminDecideLeave(id, decision, note, currentExecutorUser, currentExecutorPass);
+}
+
+/* ---------- 執行者：假別與月份圖示 ---------- */
+var lvPendingImg = null;
+function goToLeaveSettings() {
+  showPage('page-executor-leave-settings');
+  const now = new Date();
+  document.getElementById('lv-img-month').value = now.getFullYear() + '-' + lvPad_(now.getMonth() + 1);
+  document.getElementById('lv-img-file').value = '';
+  document.getElementById('lv-img-preview-wrap').style.display = 'none';
+  document.getElementById('lv-img-status').innerText = '';
+  lvPendingImg = null;
+  lvLoadTypesAdmin_();
+  lvLoadImagesAdmin_();
+}
+function lvRenderTypes_(list) {
+  const box = document.getElementById('lv-types-list');
+  box.innerHTML = '';
+  list.forEach(function(t) {
+    const row = apEl_('div', 'lv-type-row' + (t.active ? '' : ' off'));
+    row.appendChild(apEl_('span', 'nm', t.name));
+    const b = apEl_('button', '', tr(t.active ? 'lv_type_disable' : 'lv_type_enable'));
+    b.style.background = t.active ? '#90A4AE' : '#2E7D32'; b.style.color = 'white'; b.style.padding = '4px 10px'; b.style.fontSize = '12px';
+    b.onclick = function() { lvSaveType_(t.name, !t.active); };
+    row.appendChild(b);
+    box.appendChild(row);
+  });
+}
+function lvLoadTypesAdmin_() {
+  google.script.run
+    .withSuccessHandler(function(res) { if (res.success) lvRenderTypes_(res.types); else alert(res.msg || ''); })
+    .withFailureHandler(function(err) { alert(err.message); })
+    .adminListLeaveTypes(currentExecutorUser, currentExecutorPass);
+}
+function lvSaveType_(name, active) {
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res.success) { alert(res.msg || ''); return; }
+      lvRenderTypes_(res.types);
+      lvState.types = [];                       // 申請表單下次重新讀取
+    })
+    .withFailureHandler(function(err) { alert(err.message); })
+    .adminSaveLeaveType(name, active, currentExecutorUser, currentExecutorPass);
+}
+function lvAddType() {
+  const el = document.getElementById('lv-type-new');
+  const n = el.value.trim();
+  if (!n) return;
+  lvSaveType_(n, true);
+  el.value = '';
+}
+
+function lvRenderImages_(list) {
+  const box = document.getElementById('lv-img-list');
+  box.innerHTML = '';
+  const has = {};
+  list.forEach(function(it) { has[it.month] = true; });
+  Object.keys(LV_DEFAULT_IMAGES).forEach(function(m) {
+    if (has[m]) return;
+    const row = apEl_('div', 'lv-img-row');
+    const wrap = apEl_('div', 'lv-hero'); wrap.dataset.crop = String(LV_DEFAULT_IMAGES[m].crop);
+    const img = new Image(); img.alt = ''; img.onload = function() { lvFitHero_(wrap); }; img.src = BG_BASE + LV_DEFAULT_IMAGES[m].file;
+    wrap.appendChild(img); row.appendChild(wrap);
+    row.appendChild(apEl_('div', '', m + '　' + tr('lv_img_builtin')));
+    box.appendChild(row);
+  });
+  list.forEach(function(it) {
+    const row = apEl_('div', 'lv-img-row');
+    const wrap = apEl_('div', 'lv-hero'); wrap.dataset.crop = String(it.crop);
+    const img = new Image(); img.alt = ''; img.onload = function() { lvFitHero_(wrap); }; img.src = it.url;
+    wrap.appendChild(img); row.appendChild(wrap);
+    const side = apEl_('div', ''); side.style.flex = '1';
+    side.appendChild(apEl_('div', '', it.month));
+    const rng = document.createElement('input'); rng.type = 'range'; rng.min = '0.15'; rng.max = '1'; rng.step = '0.005'; rng.value = it.crop; rng.style.width = '100%';
+    rng.oninput = function() { wrap.dataset.crop = rng.value; lvFitHero_(wrap); };
+    rng.onchange = function() {
+      google.script.run
+        .withSuccessHandler(function(res) { if (!res.success) alert(res.msg || ''); else lvRenderImages_(res.images); })
+        .withFailureHandler(function(err) { alert(err.message); })
+        .adminSetLeaveImageCrop(it.month, rng.value, currentExecutorUser, currentExecutorPass);
+    };
+    side.appendChild(rng);
+    const del = apEl_('button', '', tr('lv_img_delete')); del.style.background = '#C62828'; del.style.color = 'white'; del.style.padding = '4px 10px'; del.style.fontSize = '12px';
+    del.onclick = function() {
+      if (!confirm(tr('lv_img_delete_confirm', { m: it.month }))) return;
+      google.script.run
+        .withSuccessHandler(function(res) { if (!res.success) alert(res.msg || ''); else lvRenderImages_(res.images); })
+        .withFailureHandler(function(err) { alert(err.message); })
+        .adminDeleteLeaveImage(it.month, currentExecutorUser, currentExecutorPass);
+    };
+    side.appendChild(del);
+    row.appendChild(side);
+    box.appendChild(row);
+  });
+  lvFitAll_();
+}
+function lvLoadImagesAdmin_() {
+  google.script.run
+    .withSuccessHandler(function(res) { if (res.success) lvRenderImages_(res.images); else alert(res.msg || ''); })
+    .withFailureHandler(function(err) { alert(err.message); })
+    .adminListLeaveImages(currentExecutorUser, currentExecutorPass);
+}
+async function lvImgChosen(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const st = document.getElementById('lv-img-status');
+  try {
+    st.innerText = tr('ap_status_converting');
+    lvPendingImg = await imageToWebp_(file, 1400);
+    st.innerText = tr('lv_img_converted', { type: lvPendingImg.mime.replace('image/', '').toUpperCase(), w: lvPendingImg.w, h: lvPendingImg.h, kb: Math.round(lvPendingImg.bytes / 1024) });
+    const prev = document.getElementById('lv-img-preview');
+    prev.innerHTML = '';
+    const crop = parseFloat(document.getElementById('lv-img-crop').value) || 0.412;
+    prev.dataset.crop = String(crop);
+    const img = new Image(); img.alt = '';
+    img.onload = function() { lvFitHero_(prev); };
+    img.src = 'data:' + lvPendingImg.mime + ';base64,' + lvPendingImg.base64;
+    prev.appendChild(img);
+    document.getElementById('lv-img-preview-wrap').style.display = 'block';
+    lvImgCropInput();
+  } catch (e) {
+    st.innerText = '';
+    alert(tr('ap_err_decode'));
+  }
+}
+function lvImgCropInput() {
+  const v = document.getElementById('lv-img-crop').value;
+  document.getElementById('lv-img-crop-v').innerText = Math.round(v * 100) + '%';
+  const prev = document.getElementById('lv-img-preview');
+  prev.dataset.crop = v;
+  lvFitHero_(prev);
+}
+function lvImgUpload() {
+  const month = document.getElementById('lv-img-month').value.trim();
+  if (!/^\d{4}-\d{2}$/.test(month)) { alert(tr('lv_img_need_month')); return; }
+  if (!lvPendingImg) { alert(tr('lv_img_need_file')); return; }
+  const st = document.getElementById('lv-img-status');
+  st.innerText = tr('ap_status_uploading');
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res.success) { st.innerText = ''; alert(res.msg || tr('ap_save_fail')); return; }
+      st.innerText = tr('lv_img_uploaded');
+      document.getElementById('lv-img-preview-wrap').style.display = 'none';
+      document.getElementById('lv-img-file').value = '';
+      lvPendingImg = null;
+      lvRenderImages_(res.images);
+    })
+    .withFailureHandler(function(err) { st.innerText = ''; alert(tr('ap_save_fail') + '：' + err.message); })
+    .adminUploadLeaveImage(month, lvPendingImg.mime, lvPendingImg.base64, document.getElementById('lv-img-crop').value, currentExecutorUser, currentExecutorPass);
 }
 
 /* ============================================================
