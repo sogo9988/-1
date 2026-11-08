@@ -871,6 +871,13 @@ html[data-btnshape="squareR"] .menu-grid > button {
 .lv-img-row { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 13px; }
 .lv-img-row .lv-hero { width: 140px; flex: none; border-radius: 8px; }
 
+/* ===== 使用者與權限 ===== */
+.ac-perms { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0; }
+.ac-perms label { display: flex; align-items: center; gap: 4px; font-size: 13px; background: #f3f6fa; border-radius: 8px; padding: 4px 8px; cursor: pointer; }
+.ac-chip { display: inline-block; background: #E3F2FD; color: #1565C0; border-radius: 8px; padding: 1px 7px; font-size: 11px; margin: 2px 3px 0 0; }
+.ac-chip.all { background: #E8F5E9; color: #2E7D32; }
+.ac-chip.none { background: #FFEBEE; color: #C62828; }
+
 /* ============================================================
  * 表單頁按鈕（維持原本的統一尺寸）：同一種按鈕高度、字級、圓角一致，
  * 動作按鈕等寬排列，手機自動變兩欄
@@ -1037,6 +1044,7 @@ function bgSlotCount_() {
   <button style="background:#00695C; color:white;" onclick="goToAppearance()" data-i18n="exec_menu_appearance">背景圖與畫面設定</button>
   <button style="background:#AD1457; color:white;" onclick="goToLeaveApprove()" data-i18n="exec_menu_leave_approve">假勤簽核</button>
   <button style="background:#6A1B9A; color:white;" onclick="goToLeaveSettings()" data-i18n="exec_menu_leave_settings">假勤設定（月曆圖與假別）</button>
+  <button style="background:#37474F; color:white;" onclick="goToAccounts()" data-i18n="exec_menu_users">使用者與權限</button>
 <button onclick="executorLogout()" style="background:#666; color:white;" data-i18n="back_home">回首頁</button>
 </div>
 </div>
@@ -1338,6 +1346,41 @@ function bgSlotCount_() {
     <div id="lv-day-list"></div>
     <div style="margin-top:12px;"><button class="btn-std" style="background:#666; color:white;" onclick="lvCloseDay()" data-i18n="lv_close">關閉</button></div>
   </div>
+</div>
+
+<!-- 執行者專區：使用者與權限 -->
+<div id="page-executor-users" class="page" style="text-align:center; margin-top:40px;">
+<h3 data-i18n="ac_title">👥 使用者與權限</h3>
+<div style="max-width:680px; margin:0 auto; text-align:left;">
+  <div class="lv-card" id="ac-form-box">
+    <b id="ac-form-title" data-i18n="ac_form_add">新增帳號</b>
+    <div class="dv-row"><label data-i18n="ac_kind">身分</label>
+      <select id="ac-kind" onchange="acKindChange()">
+        <option value="user" data-i18n="ac_kind_user">一般使用者</option>
+        <option value="executor" data-i18n="ac_kind_executor">執行者（可管理系統與帳號）</option>
+      </select></div>
+    <div class="dv-row"><label data-i18n="ac_account">帳號</label><input id="ac-account" maxlength="30" autocomplete="off"></div>
+    <div class="dv-row"><label data-i18n="ac_password">密碼</label><input id="ac-password" type="password" autocomplete="new-password"></div>
+    <div class="dv-row"><label data-i18n="ac_display">備註</label><input id="ac-display" maxlength="20" placeholder=""></div>
+    <div id="ac-perms-wrap">
+      <div style="font-size:13px; font-weight:bold; margin-top:6px;" data-i18n="ac_perms">功能權限</div>
+      <div id="ac-perms" class="ac-perms"></div>
+      <div style="font-size:12px;"><a href="javascript:void(0)" onclick="acPermsAll(true)" data-i18n="ac_perm_all">全選</a> ｜ <a href="javascript:void(0)" onclick="acPermsAll(false)" data-i18n="ac_perm_none">全不選</a></div>
+    </div>
+    <label style="display:block; margin:8px 0; font-size:14px;"><input type="checkbox" id="ac-active" checked> <span data-i18n="ac_active">啟用（取消勾選＝停用，無法登入與操作）</span></label>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn-std" style="background:#2E7D32; color:white;" onclick="acSave()" data-i18n="ac_save">儲存</button>
+      <button class="btn-std" style="background:#666; color:white;" onclick="acClearForm()" data-i18n="ac_clear">清除表單</button>
+    </div>
+    <p style="font-size:12px; color:#666; margin:8px 0 0;" data-i18n="ac_hint">新帳號預設擁有全部權限。修改既有帳號時，密碼留空＝不改密碼。執行者帳號永遠擁有全部權限。</p>
+  </div>
+  <div class="dv-row" style="margin-top:12px;"><input id="ac-search" oninput="acRender_()" placeholder=""></div>
+  <h4 data-i18n="ac_users">一般使用者</h4>
+  <div id="ac-users"></div>
+  <h4 style="margin-top:16px;" data-i18n="ac_execs">執行者</h4>
+  <div id="ac-execs"></div>
+</div>
+<br><button onclick="showPage('page-executor-menu')" style="background:#666; color:white;" data-i18n="inv_back">回上一頁</button>
 </div>
 
 <!-- 2.5 入庫模式選擇頁 -->
@@ -2303,6 +2346,47 @@ const I18N = {
     exec_menu_inventory: "庫存資料維護",
     exec_menu_appearance: "背景圖與畫面設定",
     exec_menu_dataview: "資料檢視與匯出",
+    exec_menu_users: "使用者與權限",
+    ac_title: "👥 使用者與權限",
+    ac_form_add: "新增帳號",
+    ac_form_edit: "修改帳號：{u}",
+    ac_kind: "身分",
+    ac_kind_user: "一般使用者",
+    ac_kind_executor: "執行者（可管理系統與帳號）",
+    ac_account: "帳號",
+    ac_password: "密碼",
+    ac_pw_edit_hint: "留空＝不改密碼",
+    ac_display: "備註",
+    ac_perms: "功能權限",
+    ac_perm_inbound: "入庫（序號／料號／批量入庫）",
+    ac_perm_outbound: "發料／出庫（整棧板、依序號、指定、批量）",
+    ac_perm_adjust: "庫存異動／改號",
+    ac_perm_special: "K01 特殊倉進出庫",
+    ac_perm_issue: "單據異常回報",
+    ac_perm_leave: "申請休假",
+    ac_perm_all: "全選",
+    ac_perm_none: "全不選",
+    ac_active: "啟用（取消勾選＝停用，無法登入與操作）",
+    ac_save: "儲存",
+    ac_clear: "清除表單",
+    ac_hint: "新帳號預設擁有全部權限。修改既有帳號時，密碼留空＝不改密碼。執行者帳號永遠擁有全部權限。",
+    ac_users: "一般使用者",
+    ac_execs: "執行者",
+    ac_status_on: "啟用",
+    ac_status_off: "已停用",
+    ac_self: "你",
+    ac_all_perms: "全部權限",
+    ac_no_perms: "沒有任何權限",
+    ac_btn_edit: "編輯",
+    ac_btn_pw: "重設密碼",
+    ac_btn_off: "停用",
+    ac_btn_on: "啟用",
+    ac_btn_delete: "刪除",
+    ac_pw_prompt: "請輸入 {u} 的新密碼（至少 4 個字元）：",
+    ac_delete_confirm: "確定要刪除帳號 {u} 嗎？\n\n（歷史紀錄不受影響；之後這個帳號就無法登入）",
+    ac_saved: "已儲存！",
+    ac_need_account: "請輸入帳號！",
+    ac_need_pw: "密碼至少要 4 個字元！",
     choice_leave: "📅 假勤系統",
     exec_menu_leave_approve: "假勤簽核",
     exec_menu_leave_settings: "假勤設定（月曆圖與假別）",
@@ -2863,6 +2947,47 @@ const I18N = {
     exec_menu_inventory: "Inventory Data Maintenance",
     exec_menu_appearance: "Backgrounds & Layout",
     exec_menu_dataview: "Data View & Export",
+    exec_menu_users: "Users & Permissions",
+    ac_title: "👥 Users & Permissions",
+    ac_form_add: "Add account",
+    ac_form_edit: "Edit account: {u}",
+    ac_kind: "Role",
+    ac_kind_user: "Regular user",
+    ac_kind_executor: "Executor (can manage the system and accounts)",
+    ac_account: "Account",
+    ac_password: "Password",
+    ac_pw_edit_hint: "leave empty = keep",
+    ac_display: "Note",
+    ac_perms: "Permissions",
+    ac_perm_inbound: "Inbound (serial / part / batch)",
+    ac_perm_outbound: "Outbound (pallet, serial, specified, batch)",
+    ac_perm_adjust: "Inventory adjust / pallet rename",
+    ac_perm_special: "K01 special warehouse in/out",
+    ac_perm_issue: "Document issue reports",
+    ac_perm_leave: "Request leave",
+    ac_perm_all: "Select all",
+    ac_perm_none: "Select none",
+    ac_active: "Enabled (unchecked = disabled: cannot sign in or operate)",
+    ac_save: "Save",
+    ac_clear: "Clear form",
+    ac_hint: "New accounts get all permissions by default. When editing, leaving the password empty keeps the old one. Executor accounts always have every permission.",
+    ac_users: "Regular users",
+    ac_execs: "Executors",
+    ac_status_on: "Enabled",
+    ac_status_off: "Disabled",
+    ac_self: "you",
+    ac_all_perms: "All permissions",
+    ac_no_perms: "No permissions",
+    ac_btn_edit: "Edit",
+    ac_btn_pw: "Reset password",
+    ac_btn_off: "Disable",
+    ac_btn_on: "Enable",
+    ac_btn_delete: "Delete",
+    ac_pw_prompt: "Enter a new password for {u} (at least 4 characters):",
+    ac_delete_confirm: "Delete account {u}?\n\n(History is not affected; this account can no longer sign in.)",
+    ac_saved: "Saved!",
+    ac_need_account: "Please enter the account!",
+    ac_need_pw: "The password needs at least 4 characters!",
     choice_leave: "📅 Leave System",
     exec_menu_leave_approve: "Leave Approvals",
     exec_menu_leave_settings: "Leave Settings (month images & types)",
@@ -4117,7 +4242,7 @@ var editState = null;
 var viewFrame_ = null;   // 圖片在電腦橫式的實際顯示範圍（有自訂大小／位置時才有值）   // 「畫面設定」調整中的暫存狀態（null＝沒有在調整）
 const PAGE_LEVEL = {
   // 第 1 張（lv1.webp）DOA 大門
-  'page-welcome': 1, 'page-executor-login': 1, 'page-executor-menu': 1, 'page-executor-region': 1, 'page-executor-changelog': 1, 'page-executor-inventory': 1, 'page-executor-appearance': 1, 'page-executor-data': 1, 'page-executor-leave-approve': 1, 'page-executor-leave-settings': 1,
+  'page-welcome': 1, 'page-executor-login': 1, 'page-executor-menu': 1, 'page-executor-region': 1, 'page-executor-changelog': 1, 'page-executor-inventory': 1, 'page-executor-appearance': 1, 'page-executor-data': 1, 'page-executor-users': 1, 'page-executor-leave-approve': 1, 'page-executor-leave-settings': 1,
   // 第 2 張（lv2.webp）火鍋
   'page-choice': 2, 'page-designated-menu': 2, 'page-designated-upload': 2, 'page-designated-scan': 2, 'page-success': 2,
   // 第 3 張（lv3.webp）烤肉
@@ -6125,6 +6250,151 @@ function lvImgUpload() {
     })
     .withFailureHandler(function(err) { st.innerText = ''; alert(tr('ap_save_fail') + '：' + err.message); })
     .adminUploadLeaveImage(month, lvPendingImg.mime, lvPendingImg.base64, document.getElementById('lv-img-crop').value, currentExecutorUser, currentExecutorPass);
+}
+
+/* ============================================================
+ * 執行者專區：使用者與權限
+ * 新增／修改／停用／刪除帳號，並設定一般使用者的功能權限。
+ * 權限由後端強制檢查（沒有權限的人即使繞過畫面，也會被擋在 Apps Script 這一關）。
+ * ============================================================ */
+const AC_PERMS = [
+  { id: 'inbound',  key: 'ac_perm_inbound' },
+  { id: 'outbound', key: 'ac_perm_outbound' },
+  { id: 'adjust',   key: 'ac_perm_adjust' },
+  { id: 'special',  key: 'ac_perm_special' },
+  { id: 'issue',    key: 'ac_perm_issue' },
+  { id: 'leave',    key: 'ac_perm_leave' }
+];
+var acState = { accounts: [], self: '', editing: null };
+
+function goToAccounts() {
+  showPage('page-executor-users');
+  acClearForm();
+  acRenderPermBoxes_(null);
+  acLoad_();
+}
+function acLoad_() {
+  google.script.run
+    .withSuccessHandler(function(res) { if (!res.success) { alert(res.msg || ''); return; } acState.accounts = res.accounts; acState.self = res.self; acRender_(); })
+    .withFailureHandler(function(err) { alert(err.message); })
+    .adminListAccounts(currentExecutorUser, currentExecutorPass);
+}
+function acRenderPermBoxes_(perms) {
+  const box = document.getElementById('ac-perms');
+  box.innerHTML = '';
+  const all = !perms || perms.indexOf('*') >= 0;
+  AC_PERMS.forEach(function(p) {
+    const lb = document.createElement('label');
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = p.id; cb.checked = all || perms.indexOf(p.id) >= 0;
+    lb.appendChild(cb); lb.appendChild(document.createTextNode(tr(p.key)));
+    box.appendChild(lb);
+  });
+}
+function acPermsAll(on) { document.querySelectorAll('#ac-perms input').forEach(function(c) { c.checked = on; }); }
+function acKindChange() {
+  document.getElementById('ac-perms-wrap').style.display = document.getElementById('ac-kind').value === 'user' ? 'block' : 'none';
+}
+function acClearForm() {
+  acState.editing = null;
+  document.getElementById('ac-form-title').innerText = tr('ac_form_add');
+  const kind = document.getElementById('ac-kind'); kind.disabled = false; kind.value = 'user';
+  const acc = document.getElementById('ac-account'); acc.readOnly = false; acc.value = '';
+  const pw = document.getElementById('ac-password'); pw.value = ''; pw.placeholder = '';
+  document.getElementById('ac-display').value = '';
+  document.getElementById('ac-active').checked = true;
+  acRenderPermBoxes_(null);
+  acKindChange();
+}
+function acEdit_(a) {
+  acState.editing = a.kind + '|' + a.username;
+  document.getElementById('ac-form-title').innerText = tr('ac_form_edit', { u: a.username });
+  const kind = document.getElementById('ac-kind'); kind.value = a.kind; kind.disabled = true;
+  const acc = document.getElementById('ac-account'); acc.value = a.username; acc.readOnly = true;
+  const pw = document.getElementById('ac-password'); pw.value = ''; pw.placeholder = tr('ac_pw_edit_hint');
+  document.getElementById('ac-display').value = a.name || '';
+  document.getElementById('ac-active').checked = !!a.active;
+  acRenderPermBoxes_(a.perms);
+  acKindChange();
+  document.getElementById('ac-form-box').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function acSave() {
+  const kind = document.getElementById('ac-kind').value;
+  const account = document.getElementById('ac-account').value.trim();
+  const pw = document.getElementById('ac-password').value;
+  const isNew = !acState.editing;
+  if (!account) { alert(tr('ac_need_account')); return; }
+  if (isNew && pw.trim().length < 4) { alert(tr('ac_need_pw')); return; }
+  if (!isNew && pw.trim() && pw.trim().length < 4) { alert(tr('ac_need_pw')); return; }
+  let perms = null;
+  if (kind === 'user') {
+    const sel = Array.prototype.map.call(document.querySelectorAll('#ac-perms input:checked'), function(c) { return c.value; });
+    perms = (sel.length === AC_PERMS.length) ? ['*'] : sel;
+  }
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res.success) { alert(res.msg || ''); return; }
+      acState.accounts = res.accounts; acState.self = res.self;
+      acClearForm(); acRender_();
+      alert(tr('ac_saved'));
+    })
+    .withFailureHandler(function(err) { alert(err.message); })
+    .adminSaveAccount(kind, account, pw, perms, document.getElementById('ac-display').value.trim(), document.getElementById('ac-active').checked, currentExecutorUser, currentExecutorPass);
+}
+function acRowAction_(fn, confirmKey, a) {
+  if (confirmKey && !confirm(tr(confirmKey, { u: a.username }))) return;
+  fn();
+}
+function acRender_() {
+  const q = (document.getElementById('ac-search').value || '').trim().toUpperCase();
+  const boxU = document.getElementById('ac-users'), boxE = document.getElementById('ac-execs');
+  boxU.innerHTML = ''; boxE.innerHTML = '';
+  acState.accounts.forEach(function(a) {
+    if (q && (a.username.toUpperCase().indexOf(q) < 0 && (a.name || '').toUpperCase().indexOf(q) < 0)) return;
+    const card = apEl_('div', 'lv-card');
+    const top = apEl_('div', '');
+    top.appendChild(apEl_('b', '', a.username));
+    if (a.name) top.appendChild(apEl_('span', '', '（' + a.name + '）'));
+    top.appendChild(document.createTextNode('　'));
+    top.appendChild(apEl_('span', 'lv-badge ' + (a.active ? 'lv-b-approved' : 'lv-b-rejected'), tr(a.active ? 'ac_status_on' : 'ac_status_off')));
+    if (a.username === acState.self && a.kind === 'executor') top.appendChild(apEl_('span', 'ac-chip', tr('ac_self')));
+    card.appendChild(top);
+    const line = apEl_('div', '');
+    if (a.kind === 'executor') line.appendChild(apEl_('span', 'ac-chip all', tr('ac_all_perms')));
+    else if (a.perms.indexOf('*') >= 0) line.appendChild(apEl_('span', 'ac-chip all', tr('ac_all_perms')));
+    else if (!a.perms.length) line.appendChild(apEl_('span', 'ac-chip none', tr('ac_no_perms')));
+    else AC_PERMS.forEach(function(p) { if (a.perms.indexOf(p.id) >= 0) line.appendChild(apEl_('span', 'ac-chip', tr(p.key))); });
+    card.appendChild(line);
+    const act = apEl_('div', 'lv-actions');
+    const mk = function(txt, bg, fn) { const b = apEl_('button', '', txt); b.style.background = bg; b.style.color = 'white'; b.onclick = fn; act.appendChild(b); };
+    mk(tr('ac_btn_edit'), '#1565C0', function() { acEdit_(a); });
+    mk(tr('ac_btn_pw'), '#6A1B9A', function() {
+      const np = prompt(tr('ac_pw_prompt', { u: a.username }), '');
+      if (np === null) return;
+      if (np.trim().length < 4) { alert(tr('ac_need_pw')); return; }
+      acCall_('adminSaveAccount', [a.kind, a.username, np.trim(), null, null, null]);
+    });
+    const isSelf = a.kind === 'executor' && a.username === acState.self;
+    if (!isSelf) {
+      mk(tr(a.active ? 'ac_btn_off' : 'ac_btn_on'), a.active ? '#78909C' : '#2E7D32', function() {
+        acCall_('adminSaveAccount', [a.kind, a.username, '', null, null, !a.active]);
+      });
+      mk(tr('ac_btn_delete'), '#C62828', function() {
+        if (!confirm(tr('ac_delete_confirm', { u: a.username }))) return;
+        acCall_('adminDeleteAccount', [a.kind, a.username]);
+      });
+    }
+    card.appendChild(act);
+    (a.kind === 'executor' ? boxE : boxU).appendChild(card);
+  });
+}
+function acCall_(fn, args) {
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res.success) { alert(res.msg || ''); return; }
+      acState.accounts = res.accounts; acState.self = res.self; acRender_();
+    })
+    .withFailureHandler(function(err) { alert(err.message); })
+    [fn].apply(null, args.concat([currentExecutorUser, currentExecutorPass]));
 }
 
 /* ============================================================
