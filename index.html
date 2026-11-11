@@ -879,6 +879,27 @@ html[data-btnshape="squareR"] .menu-grid > button {
 .ac-chip.none { background: #FFEBEE; color: #C62828; }
 
 /* ============================================================
+ * 單顆按鈕位置（執行者在「畫面設定」拖曳或微調）：只有調整過的按鈕才有 .has-bo，沒調整的完全不受影響
+ *   --bdx / --bdy：相對於圖片範圍（電腦）或螢幕（手機）的偏移比例；--bs：這顆按鈕自己的縮放
+ *   用獨立的 translate / scale 屬性，不會干擾按鈕原本 hover 動畫用的 transform
+ * ============================================================ */
+.menu-grid > button.has-bo {
+  translate: calc(var(--bdx, 0) * 100vw / var(--mscale, 1)) calc(var(--bdy, 0) * 100lvh / var(--mscale, 1));
+  scale: var(--bs, 1);
+}
+@media (min-aspect-ratio: 1/1) {
+  .menu-grid > button.has-bo {
+    translate: calc(var(--bdx, 0) * var(--frame-w) / (var(--ui-scale, 1) * var(--mscale, 1))) calc(var(--bdy, 0) * var(--frame-h) / (var(--ui-scale, 1) * var(--mscale, 1)));
+  }
+}
+.ap-btn-edit .menu-grid > button { touch-action: none; cursor: move; user-select: none; }
+.menu-grid > button.ap-btn-sel { outline: 3px dashed #FF9800; outline-offset: 2px; }
+.ap-nudge { display: flex; gap: 6px; align-items: center; margin: 4px 0; flex-wrap: wrap; }
+.ap-nudge button { padding: 6px 14px; font-size: 16px; background: #546E7A; color: #fff; }
+.ap-mode-on { background: #00695C !important; color: #fff !important; }
+.ap-mode-off { background: #CFD8DC !important; color: #37474F !important; }
+
+/* ============================================================
  * 表單頁按鈕（維持原本的統一尺寸）：同一種按鈕高度、字級、圓角一致，
  * 動作按鈕等寬排列，手機自動變兩欄
  * ============================================================ */
@@ -1208,11 +1229,34 @@ function bgSlotCount_() {
   <div class="ap-edit-title" id="ap-edit-title"></div>
   <div class="ap-edit-row"><label data-i18n="ap_edit_bg">背景圖</label><select id="ap-edit-slot" onchange="apEditSlotChange()"></select></div>
   <div id="ap-edit-menu">
+    <div class="ap-edit-row" id="ap-edit-modes" style="flex-wrap:wrap;">
+      <button id="ap-mode-group" style="padding:5px 12px; font-size:13px;" onclick="apSetBtnMode(false)" data-i18n="ap_mode_group">整組選單</button>
+      <button id="ap-mode-btn" style="padding:5px 12px; font-size:13px;" onclick="apSetBtnMode(true)" data-i18n="ap_mode_btn">單顆按鈕</button>
+    </div>
+    <div id="ap-edit-group">
     <div class="ap-edit-row"><label data-i18n="ap_edit_x">左右</label><input type="range" id="ap-edit-dx" min="-0.5" max="0.5" step="0.005" oninput="apEditInput()"><span id="ap-edit-dx-v"></span></div>
     <div class="ap-edit-row"><label data-i18n="ap_edit_y">上下</label><input type="range" id="ap-edit-dy" min="-0.5" max="0.9" step="0.005" oninput="apEditInput()"><span id="ap-edit-dy-v"></span></div>
     <div class="ap-edit-row"><label data-i18n="ap_edit_s">大小</label><input type="range" id="ap-edit-s" min="0.5" max="2" step="0.05" oninput="apEditInput()"><span id="ap-edit-s-v"></span></div>
+    </div>
+    <div id="ap-edit-btns" style="display:none;">
+      <div style="font-size:12px; color:#666; margin:2px 0;" data-i18n="ap_btn_hint">用手指或滑鼠直接拖曳按鈕移動位置；點選後可用方向鍵微調（按住會連續移動）與縮放。</div>
+      <div id="ap-btn-selected" style="font-weight:bold; margin:4px 0;"></div>
+      <div class="ap-nudge">
+        <button onpointerdown="apNudgeStart(0,-1)" onpointerup="apNudgeStop()" onpointerleave="apNudgeStop()" onpointercancel="apNudgeStop()">▲</button>
+        <button onpointerdown="apNudgeStart(-1,0)" onpointerup="apNudgeStop()" onpointerleave="apNudgeStop()" onpointercancel="apNudgeStop()">◀</button>
+        <button onpointerdown="apNudgeStart(1,0)" onpointerup="apNudgeStop()" onpointerleave="apNudgeStop()" onpointercancel="apNudgeStop()">▶</button>
+        <button onpointerdown="apNudgeStart(0,1)" onpointerup="apNudgeStop()" onpointerleave="apNudgeStop()" onpointercancel="apNudgeStop()">▼</button>
+        <span id="ap-btn-pos" style="font-size:12px; color:#555;"></span>
+      </div>
+      <div class="ap-edit-row"><label data-i18n="ap_btn_size">按鈕大小</label><input type="range" id="ap-btn-s" min="0.4" max="2.5" step="0.05" oninput="apBtnSize()"><span id="ap-btn-s-v"></span></div>
+      <div class="ap-edit-row" style="flex-wrap:wrap;">
+        <button style="background:#EF6C00; color:white; padding:5px 12px; font-size:13px;" onclick="apBtnResetOne()" data-i18n="ap_btn_reset_one">此按鈕還原</button>
+        <button style="background:#BF360C; color:white; padding:5px 12px; font-size:13px;" onclick="apBtnResetAll()" data-i18n="ap_btn_reset_all">全部按鈕還原</button>
+      </div>
+    </div>
   </div>
   <div id="ap-edit-nomenu" style="color:#666; margin:4px 0;" data-i18n="ap_edit_nomenu">這個畫面沒有選單按鈕，只能換背景圖。</div>
+  <div id="ap-edit-view">
   <div class="ap-edit-sub" data-i18n="ap_edit_view_title">背景圖顯示（這張圖在所有畫面共用）</div>
   <div class="ap-edit-row" style="flex-wrap:wrap;">
     <button style="background:#455A64; color:white; padding:4px 10px; font-size:12px;" onclick="apViewPreset('cover')" data-i18n="ap_view_preset_cover">填滿螢幕</button>
@@ -1223,6 +1267,7 @@ function bgSlotCount_() {
   <div class="ap-edit-row"><label data-i18n="ap_view_x">左右</label><input type="range" id="ap-view-x" min="0" max="1" step="0.005" oninput="apViewInput()"><span id="ap-view-x-v"></span></div>
   <div class="ap-edit-row"><label data-i18n="ap_view_y">上下</label><input type="range" id="ap-view-y" min="0" max="1" step="0.005" oninput="apViewInput()"><span id="ap-view-y-v"></span></div>
   <div id="ap-view-note" style="color:#666; font-size:12px; margin:2px 0;"></div>
+  </div>
   <div class="ap-edit-actions">
     <button style="background:#2E7D32; color:white;" onclick="apSaveEdit()" data-i18n="ap_edit_save">儲存</button>
     <button id="ap-btn-reset-page" style="background:#F57C00; color:white;" onclick="apResetEditPage()" data-i18n="ap_edit_reset">這個畫面還原預設</button>
@@ -2533,6 +2578,15 @@ const I18N = {
     ap_edit_reset: "這個畫面還原預設",
     ap_edit_cancel: "取消",
     ap_edit_dock: "調整列移到上方／下方",
+    ap_mode_group: "整組選單",
+    ap_mode_btn: "單顆按鈕",
+    ap_btn_hint: "用手指或滑鼠直接拖曳按鈕移動位置；點選後可用方向鍵微調（按住會連續移動）與縮放。",
+    ap_btn_selected: "目前選取：{name}",
+    ap_btn_none: "請先點選一顆按鈕",
+    ap_btn_pos: "左右 {x}%　上下 {y}%",
+    ap_btn_size: "按鈕大小",
+    ap_btn_reset_one: "此按鈕還原",
+    ap_btn_reset_all: "全部按鈕還原",
     ap_btn_view: "顯示調整",
     ap_edit_view_title: "背景圖顯示（這張圖在所有畫面共用）",
     ap_edit_view_reset: "這張圖還原預設",
@@ -3134,6 +3188,15 @@ const I18N = {
     ap_edit_reset: "Restore this screen",
     ap_edit_cancel: "Cancel",
     ap_edit_dock: "Move bar to top / bottom",
+    ap_mode_group: "Whole menu",
+    ap_mode_btn: "Single button",
+    ap_btn_hint: "Drag a button with your finger or mouse to move it; select it to fine-tune with the arrows (hold to repeat) and resize.",
+    ap_btn_selected: "Selected: {name}",
+    ap_btn_none: "Tap a button first",
+    ap_btn_pos: "Left/Right {x}%  Up/Down {y}%",
+    ap_btn_size: "Button size",
+    ap_btn_reset_one: "Restore this button",
+    ap_btn_reset_all: "Restore all buttons",
     ap_btn_view: "Display",
     ap_edit_view_title: "Background display (shared by every screen using this image)",
     ap_edit_view_reset: "Restore this image",
@@ -4336,6 +4399,7 @@ function showPage(pageId, opts) {
   document.getElementById(pageId).classList.add('active');
   applyBackdrop_(pageId);
   applyMenuSettings_(pageId);
+  applyMenuButtons_(pageId);
   window.scrollTo(0, 0);
 }
 
@@ -6605,6 +6669,163 @@ function applyImageView_() {
 window.addEventListener('resize', applyImageView_);
 
 /* ============================================================
+ * 單顆按鈕位置：選單頁每一顆按鈕都可以各自拖曳、微調位置與大小（電腦橫式、手機直式各自儲存）
+ *   UI_SETTINGS.menuBtn[頁面] = { l: { 按鈕代號: {dx,dy,s} }, p: { ... } }
+ *   按鈕代號：優先用 data-i18n，其次 onclick，再不然用順序（同頁面內重複時加上順序）
+ * ============================================================ */
+function btnList_(pageId) {
+  const page = document.getElementById(pageId);
+  if (!page) return [];
+  const els = Array.prototype.slice.call(page.querySelectorAll('.menu-grid > button'));
+  const seen = {};
+  return els.map(function(el, i) {
+    let key = el.getAttribute('data-i18n') || (el.getAttribute('onclick') || '').replace(/\s+/g, '') || ('#' + i);
+    if (seen[key]) key = key + '#' + i;
+    seen[key] = true;
+    return { el: el, key: key };
+  });
+}
+function applyMenuButtons_(pageId) {
+  const o = orient_();
+  const src = (editState && editState.pageId === pageId) ? editState.btn : (UI_SETTINGS.menuBtn && UI_SETTINGS.menuBtn[pageId]);
+  const set = src && src[o];
+  btnList_(pageId).forEach(function(it) {
+    const v = set && set[it.key];
+    if (v && (Math.abs(v.dx) > 0.0001 || Math.abs(v.dy) > 0.0001 || Math.abs((v.s || 1) - 1) > 0.0001)) {
+      it.el.classList.add('has-bo');
+      it.el.style.setProperty('--bdx', v.dx);
+      it.el.style.setProperty('--bdy', v.dy);
+      it.el.style.setProperty('--bs', v.s || 1);
+    } else {
+      it.el.classList.remove('has-bo');
+      ['--bdx', '--bdy', '--bs'].forEach(function(k) { it.el.style.removeProperty(k); });
+    }
+    it.el.classList.toggle('ap-btn-sel', !!(editState && editState.btnMode && editState.pageId === pageId && editState.sel === it.key));
+  });
+}
+// 目前「圖片實際顯示的範圍」大小（電腦）或整個螢幕（手機），拖曳的位移以它為 100%
+function apFrameSize_() {
+  const rect = document.getElementById('bg-stage').getBoundingClientRect();
+  const W = rect.width || window.innerWidth, H = rect.height || window.innerHeight;
+  if (orient_() === 'p') return { w: W, h: H };
+  if (viewFrame_) return { w: viewFrame_.w, h: viewFrame_.h };
+  const ar = aspectFor_(levelFor_(currentPageId));
+  return { w: Math.min(W, H * ar), h: Math.min(H, W / ar) };
+}
+function apBtnCur_() {
+  const e = editState, o = orient_();
+  if (!e || !e.sel) return null;
+  return (e.btn[o] && e.btn[o][e.sel]) || { dx: 0, dy: 0, s: 1 };
+}
+function apBtnSet_(v) {
+  const e = editState, o = orient_();
+  e.btn[o] = e.btn[o] || {};
+  e.btn[o][e.sel] = v;
+  applyMenuButtons_(e.pageId);
+  apRenderBtnPanel_();
+}
+function apRenderBtnPanel_() {
+  const e = editState;
+  const lab = document.getElementById('ap-btn-selected');
+  if (!e || !e.btnMode) return;
+  if (!e.sel) { lab.innerText = tr('ap_btn_none'); document.getElementById('ap-btn-pos').innerText = ''; return; }
+  const it = btnList_(e.pageId).filter(function(x) { return x.key === e.sel; })[0];
+  const c = apBtnCur_();
+  lab.innerText = tr('ap_btn_selected', { name: it ? it.el.innerText.replace(/\s+/g, ' ').trim() : e.sel });
+  document.getElementById('ap-btn-pos').innerText = tr('ap_btn_pos', { x: (c.dx * 100).toFixed(1), y: (c.dy * 100).toFixed(1) });
+  document.getElementById('ap-btn-s').value = c.s || 1;
+  document.getElementById('ap-btn-s-v').innerText = Math.round((c.s || 1) * 100) + '%';
+}
+function apSetBtnMode(on) {
+  if (!editState) return;
+  editState.btnMode = !!on;
+  const page = document.getElementById(editState.pageId);
+  page.classList.toggle('ap-btn-edit', !!on);
+  if (on && !editState.sel) { const l = btnList_(editState.pageId); if (l.length) editState.sel = l[0].key; }
+  applyMenuButtons_(editState.pageId);
+  apRenderEditBar_();
+}
+var apNudgeTimer = null;
+function apNudgeStart(sx, sy) {
+  apNudgeStop();
+  const step = function() {
+    if (!editState || !editState.sel) return;
+    const c = apBtnCur_();
+    apBtnSet_({ dx: c.dx + sx * 0.003, dy: c.dy + sy * 0.003, s: c.s || 1 });
+  };
+  step();
+  apNudgeTimer = setInterval(step, 70);
+}
+function apNudgeStop() { if (apNudgeTimer) { clearInterval(apNudgeTimer); apNudgeTimer = null; } }
+function apBtnSize() {
+  if (!editState || !editState.sel) return;
+  const c = apBtnCur_();
+  apBtnSet_({ dx: c.dx, dy: c.dy, s: parseFloat(document.getElementById('ap-btn-s').value) });
+}
+function apBtnResetOne() {
+  if (!editState || !editState.sel) return;
+  const o = orient_();
+  if (editState.btn[o]) delete editState.btn[o][editState.sel];
+  applyMenuButtons_(editState.pageId); apRenderBtnPanel_();
+}
+function apBtnResetAll() {
+  if (!editState) return;
+  editState.btn = {};
+  applyMenuButtons_(editState.pageId); apRenderBtnPanel_();
+}
+function apNormalizeBtn_(btn) {
+  const out = {};
+  ['l', 'p'].forEach(function(k) {
+    const m = btn[k]; if (!m) return;
+    const o = {};
+    Object.keys(m).forEach(function(key) {
+      const v = m[key];
+      if (Math.abs(v.dx) > 0.0005 || Math.abs(v.dy) > 0.0005 || Math.abs((v.s || 1) - 1) > 0.0005) {
+        o[key] = { dx: Math.round(v.dx * 1000) / 1000, dy: Math.round(v.dy * 1000) / 1000, s: Math.round((v.s || 1) * 100) / 100 };
+      }
+    });
+    if (Object.keys(o).length) out[k] = o;
+  });
+  return Object.keys(out).length ? out : null;
+}
+// 拖曳：在「單顆按鈕」模式下，直接用手指／滑鼠拖按鈕
+(function() {
+  let drag = null;
+  document.addEventListener('pointerdown', function(ev) {
+    if (!editState || !editState.btnMode) return;
+    const el = ev.target.closest && ev.target.closest('.menu-grid > button');
+    if (!el || !document.getElementById(editState.pageId).contains(el)) return;
+    const it = btnList_(editState.pageId).filter(function(x) { return x.el === el; })[0];
+    if (!it) return;
+    ev.preventDefault();
+    editState.sel = it.key;
+    const o = orient_();
+    editState.btn[o] = editState.btn[o] || {};
+    const cur = editState.btn[o][it.key] || { dx: 0, dy: 0, s: 1 };
+    drag = { key: it.key, x0: ev.clientX, y0: ev.clientY, dx0: cur.dx, dy0: cur.dy, s: cur.s || 1, o: o };
+    try { el.setPointerCapture(ev.pointerId); } catch (e) {}
+    applyMenuButtons_(editState.pageId);
+    apRenderBtnPanel_();
+  }, true);
+  document.addEventListener('pointermove', function(ev) {
+    if (!drag || !editState) return;
+    const fs = apFrameSize_();
+    editState.btn[drag.o][drag.key] = { dx: drag.dx0 + (ev.clientX - drag.x0) / fs.w, dy: drag.dy0 + (ev.clientY - drag.y0) / fs.h, s: drag.s };
+    applyMenuButtons_(editState.pageId);
+    apRenderBtnPanel_();
+  });
+  const end = function() { drag = null; };
+  document.addEventListener('pointerup', end);
+  document.addEventListener('pointercancel', end);
+  // 調整時點按鈕不要觸發原本的功能（不然拖完放開就會跳頁）
+  document.addEventListener('click', function(ev) {
+    if (editState && editState.btnMode && ev.target.closest && ev.target.closest('.menu-grid > button')) {
+      ev.preventDefault(); ev.stopImmediatePropagation();
+    }
+  }, true);
+})();
+
+/* ============================================================
  * 畫面設定：背景圖與選單位置（執行者專區可調整）
  * 設定存在資料庫，所有人開啟網頁都會套用；沒有任何設定時＝程式內建的預設。
  *   UI_SETTINGS.images    上傳過的圖片（第幾張 → 網址、寬高比）
@@ -6664,6 +6885,7 @@ function applyUiSettings_() {
   applyImageVars_();
   applyBackdrop_(currentPageId);
   applyMenuSettings_(currentPageId);
+  applyMenuButtons_(currentPageId);
 }
 function setUiSettings_(s) {
   UI_SETTINGS = s || {};
@@ -6689,6 +6911,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 window.addEventListener('resize', function() {
   applyMenuSettings_(currentPageId);
+  applyMenuButtons_(currentPageId);
   if (editState) apRenderEditBar_();
 });
 
@@ -6757,7 +6980,7 @@ function renderAppearance_() {
     row.appendChild(apEl_('span', 'ap-name', pageTitle_(pid)));
     const lv = (UI_SETTINGS.pageImage && UI_SETTINGS.pageImage[pid]) || PAGE_LEVEL[pid];
     row.appendChild(apEl_('span', 'ap-bg', tr('ap_slot_label', { n: lv })));
-    const custom = (UI_SETTINGS.pageImage && UI_SETTINGS.pageImage[pid]) || (UI_SETTINGS.menu && UI_SETTINGS.menu[pid]);
+    const custom = (UI_SETTINGS.pageImage && UI_SETTINGS.pageImage[pid]) || (UI_SETTINGS.menu && UI_SETTINGS.menu[pid]) || (UI_SETTINGS.menuBtn && UI_SETTINGS.menuBtn[pid]);
     if (custom) row.appendChild(apEl_('span', 'ap-badge', tr('ap_customized')));
     const b = apEl_('button', '', tr('ap_btn_adjust'));
     b.style.background = '#00695C'; b.style.color = 'white';
@@ -6902,7 +7125,8 @@ function startPageEdit(pageId, opts) {
   const cur = opts.slot || (UI_SETTINGS.pageImage && UI_SETTINGS.pageImage[pageId]) || PAGE_LEVEL[pageId];
   const menu = JSON.parse(JSON.stringify((UI_SETTINGS.menu && UI_SETTINGS.menu[pageId]) || {}));
   const view = JSON.parse(JSON.stringify(UI_SETTINGS.imageView || {}));
-  editState = { pageId: pageId, slot: cur, menu: menu, view: view, touched: {}, imageOnly: !!opts.imageOnly };
+  const btn = JSON.parse(JSON.stringify((UI_SETTINGS.menuBtn && UI_SETTINGS.menuBtn[pageId]) || {}));
+  editState = { pageId: pageId, slot: cur, menu: menu, view: view, touched: {}, imageOnly: !!opts.imageOnly, btn: btn, btnMode: false, sel: null };
   showPage(pageId);
   apRenderEditBar_();
   document.getElementById('ap-editbar').style.display = 'block';
@@ -6927,6 +7151,12 @@ function apRenderEditBar_() {
   sel.disabled = !!e.imageOnly;
   document.getElementById('ap-btn-reset-page').style.display = e.imageOnly ? 'none' : '';
   document.getElementById('ap-edit-menu').style.display = (isMenu && !e.imageOnly) ? 'block' : 'none';
+  document.getElementById('ap-edit-group').style.display = e.btnMode ? 'none' : 'block';
+  document.getElementById('ap-edit-btns').style.display = e.btnMode ? 'block' : 'none';
+  document.getElementById('ap-edit-view').style.display = e.btnMode ? 'none' : 'block';   // 調整單顆按鈕時，先收起「背景圖顯示」讓調整列矮一點
+  document.getElementById('ap-mode-group').className = e.btnMode ? 'ap-mode-off' : 'ap-mode-on';
+  document.getElementById('ap-mode-btn').className = e.btnMode ? 'ap-mode-on' : 'ap-mode-off';
+  apRenderBtnPanel_();
   document.getElementById('ap-edit-nomenu').style.display = (!isMenu && !e.imageOnly) ? 'block' : 'none';
   // 背景圖顯示：手機以「填滿螢幕」為 100%（不能更小），電腦以「完整顯示」為 100%
   const vz = document.getElementById('ap-view-z');
@@ -7025,8 +7255,10 @@ function apResetEditPage() {
   if (!editState) return;
   editState.slot = PAGE_LEVEL[editState.pageId];
   editState.menu = {};
+  editState.btn = {};
   applyBackdrop_(editState.pageId);
   applyMenuSettings_(editState.pageId);
+  applyMenuButtons_(editState.pageId);
   apRenderEditBar_();
 }
 
@@ -7044,7 +7276,15 @@ function apNormalizeMenu_(menu) {
 
 // 結束調整（不儲存），回到設定頁
 function apAbortEdit_() {
+  const pid = editState && editState.pageId;
+  apNudgeStop();
   editState = null;
+  if (pid) {
+    const pe = document.getElementById(pid);
+    if (pe) pe.classList.remove('ap-btn-edit');
+    applyMenuButtons_(pid);          // 回到「已儲存」的樣子
+    applyMenuSettings_(pid);
+  }
   document.getElementById('ap-editbar').style.display = 'none';
   document.getElementById('ap-editbar').classList.remove('top');
 }
@@ -7066,6 +7306,7 @@ function apSaveEdit() {
     patch.pageImage = {}; patch.menu = {};
     patch.pageImage[e.pageId] = (e.slot === PAGE_LEVEL[e.pageId]) ? null : e.slot;
     patch.menu[e.pageId] = apNormalizeMenu_(e.menu);
+    patch.menuBtn = {}; patch.menuBtn[e.pageId] = apNormalizeBtn_(e.btn);
   }
   google.script.run
     .withSuccessHandler(function(res) {
