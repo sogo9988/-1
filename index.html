@@ -899,6 +899,16 @@ html[data-btnshape="squareR"] .menu-grid > button {
 .ap-mode-on { background: #00695C !important; color: #fff !important; }
 .ap-mode-off { background: #CFD8DC !important; color: #37474F !important; }
 
+/* ===== 序號庫存列表 ===== */
+.snl-note { font-size: 12px; color: #666; text-align: center; margin: 0 0 10px; }
+.snl-summary { font-weight: bold; margin: 8px 0; font-size: 14px; }
+.snl-pallet { background: #E3F2FD; color: #0D47A1; font-weight: bold; padding: 6px 8px; border-radius: 6px; margin-top: 10px; font-size: 14px; }
+.snl-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.snl-tbl th, .snl-tbl td { border: 1px solid #e0e0e0; padding: 4px 6px; text-align: left; }
+.snl-tbl th { background: #f5f7fa; position: sticky; top: 0; }
+.snl-tbl .snl-sub td { background: #FFF8E1; font-weight: bold; }
+.snl-tbl .snl-grand td { background: #E8F5E9; font-weight: bold; }
+
 /* ============================================================
  * 表單頁按鈕（維持原本的統一尺寸）：同一種按鈕高度、字級、圓角一致，
  * 動作按鈕等寬排列，手機自動變兩欄
@@ -1428,6 +1438,33 @@ function bgSlotCount_() {
 <br><button onclick="showPage('page-executor-menu')" style="background:#666; color:white;" data-i18n="inv_back">回上一頁</button>
 </div>
 
+<!-- 序號庫存列表：序號入庫的資料獨立存放，和庫存總表分開、不一起計算 -->
+<div id="page-query-snlist" class="page" style="margin-top:30px;">
+  <h3 style="text-align:center;" data-i18n="snl_title">🔢 序號庫存列表</h3>
+  <p class="snl-note" data-i18n="snl_note">這裡只有「序號入庫」之後存進序號列表的資料，和庫存總表（料號入庫）完全分開，也不一起計算。</p>
+  <div style="max-width:680px; margin:0 auto;">
+    <div class="dv-row"><label data-i18n="snl_pallet">棧板號</label><input id="snl-pallet" onkeydown="if(event.key==='Enter'){snlSearch();}">
+      <label style="width:auto;" data-i18n="snl_warehouse">倉別</label><input id="snl-warehouse" onkeydown="if(event.key==='Enter'){snlSearch();}"></div>
+    <div class="dv-row"><label data-i18n="snl_part">料號</label><input id="snl-part" onkeydown="if(event.key==='Enter'){snlSearch();}">
+      <label style="width:auto;">SN</label><input id="snl-sn" onkeydown="if(event.key==='Enter'){snlSearch();}"></div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin:8px 0;">
+      <button class="btn-std" style="background:#2196F3; color:white;" onclick="snlSearch()" data-i18n="snl_search">查詢</button>
+      <button class="btn-std" style="background:#2E7D32; color:white;" onclick="snlExport()" data-i18n="snl_export">匯出 Excel</button>
+      <button class="btn-std" style="background:#78909C; color:white;" onclick="snlClear()" data-i18n="snl_clear">清除條件</button>
+    </div>
+    <div id="snl-summary" class="snl-summary"></div>
+    <div style="display:flex; gap:6px; flex-wrap:wrap; margin:6px 0;">
+      <button id="snl-tab-list" class="ap-mode-on" style="padding:5px 12px; font-size:13px;" onclick="snlTab('list')" data-i18n="snl_tab_list">序號列表</button>
+      <button id="snl-tab-total" class="ap-mode-off" style="padding:5px 12px; font-size:13px;" onclick="snlTab('total')" data-i18n="snl_tab_total">序號總計（每個棧板各料號數量）</button>
+    </div>
+    <div id="snl-list" class="scroll-result-box" style="max-height:60vh; overflow:auto;"></div>
+    <div id="snl-total" class="scroll-result-box" style="max-height:60vh; overflow:auto; display:none;"></div>
+  </div>
+  <div style="text-align:center; margin-top:10px;">
+    <button onclick="showPage('page-query-choice')" style="background:#666; color:white;" data-i18n="inv_back">回上一頁</button>
+  </div>
+</div>
+
 <!-- 2.5 入庫模式選擇頁 -->
 <div id="page-inbound-choice" class="page page-menu" data-lv="3">
 <div class="menu-box">
@@ -1621,7 +1658,7 @@ function bgSlotCount_() {
 <div id="page-batch-upload" class="page">
 <h3 data-i18n="batch_title">批量上傳 (Excel 序號)</h3>
 <p id="batch-hint-main" style="font-size:12px; color:gray;" data-i18n-html="batch_hint">
-請上傳檔名為 <b>K01USN</b> 的 Excel 檔案：A1 儲存格需固定填寫 <b>USN</b>，序號請從 A2 開始往下填寫至 A501 (一格填一組序號，最多可上傳約 500 筆)。
+請上傳檔名為 <b>K01USN</b> 的 Excel 檔案：A1 儲存格需固定填寫 <b>USN</b>，序號請從 A2 開始往下填寫至 A10001 (一格填一組序號，最多可上傳 10,000 筆)。
 </p>
 
 <div style="margin:15px 0;">
@@ -1686,7 +1723,8 @@ function bgSlotCount_() {
 <button style="background: #4CAF50; color:white;" onclick="goToSNQuery()" data-i18n="btn_sn_query_choice">序號查詢</button>
 <button style="background: #00796B; color:white;" onclick="goToInventoryQuery()" data-i18n="btn_inv_query_choice">庫存查詢</button>
 <button style="background: #009688; color:white;" onclick="goToEmptyPalletQuery()" data-i18n="btn_empty_query_choice">空棧板查詢</button>
-<button onclick="goHome()" style="background:#666; color:white;" data-i18n="back_home">回首頁</button>
+<button style="background:#00838F; color:white;" onclick="goToSnList()" data-i18n="query_snlist">🔢 序號庫存列表</button>
+  <button onclick="goHome()" style="background:#666; color:white;" data-i18n="back_home">回首頁</button>
 </div>
 </div>
 </div>
@@ -2391,6 +2429,45 @@ const I18N = {
     exec_menu_inventory: "庫存資料維護",
     exec_menu_appearance: "背景圖與畫面設定",
     exec_menu_dataview: "資料檢視與匯出",
+    query_snlist: "🔢 序號庫存列表",
+    snl_title: "🔢 序號庫存列表",
+    snl_note: "這裡只有「序號入庫」之後存進序號列表的資料，和庫存總表（料號入庫）完全分開，也不一起計算。",
+    snl_pallet: "棧板號",
+    snl_warehouse: "倉別",
+    snl_part: "料號",
+    snl_search: "查詢",
+    snl_export: "匯出 Excel",
+    snl_clear: "清除條件",
+    snl_tab_list: "序號列表",
+    snl_tab_total: "序號總計（每個棧板各料號數量）",
+    snl_loading: "查詢中...",
+    snl_summary: "共 {pallets} 個棧板、{total} 筆序號，數量合計 {qty}",
+    snl_cut: "（符合條件共 {total} 筆，這次只讀到前 {shown} 筆）",
+    snl_none: "沒有符合條件的序號資料",
+    snl_more: "畫面最多顯示前 {n} 筆，其餘請匯出 Excel 查看。",
+    snl_group_title: "棧板 {p}　共 {n} 筆　數量 {q}",
+    snl_h_wh: "倉別",
+    snl_h_part: "料號",
+    snl_h_qty: "數量",
+    snl_t_pallet: "棧板號",
+    snl_t_cnt: "SN 筆數",
+    snl_sub_title: "【棧板 {p} 小計】",
+    snl_grand: "【總計】",
+    snl_exporting: "匯出中...",
+    snl_exported: "已匯出 {n} 筆序號：{file}",
+    snl_nodata: "沒有符合條件的資料可以匯出！",
+    snl_x_title: "序號庫存列表",
+    snl_x_pallet: "棧板 {p}",
+    snl_x_info: "共 {n} 筆　數量 {q}",
+    snl_sheet_list: "序號庫存列表",
+    snl_sheet_total: "序號總計",
+    snl_sheet_flat: "序號明細",
+    sn_dup_note: "另有 {n} 筆序號已經在序號列表裡（或同一批重複出現），已略過、沒有重複入庫：{list}",
+    batch_over_limit: "【錯誤】序號超過上限！一次最多 {max} 筆，檔案裡還有 {n} 筆在 A{max1} 之後，已立即停止動作，請拆成多個檔案上傳。",
+    pallet_sn_only: "此棧板在「序號列表」裡有 {n} 筆序號（數量 {qty}），庫存總表沒有資料。整棧板發料會一併刪除這些序號。",
+    pallet_sn_note: "另有序號列表 {n} 筆（數量 {qty}），會一併出庫。",
+    rename_sn_only: "這個棧板只有「序號列表」的資料，這個頁面的整棧板改號目前只支援庫存總表裡有資料的棧板。",
+    rename_sn_note: "（序號列表另有 {n} 筆會一併改號）",
     exec_menu_users: "使用者與權限",
     ac_title: "👥 使用者與權限",
     ac_form_add: "新增帳號",
@@ -2732,7 +2809,7 @@ const I18N = {
     btn_skip_home: "不查看，直接回首頁",
     exception_list_title: "未在庫房中找到的異常序號：",
     batch_title: "批量上傳 (Excel 序號)",
-    batch_hint: '請上傳檔名為 <b>K01USN</b> 的 Excel 檔案：A1 儲存格需固定填寫 <b>USN</b>，序號請從 A2 開始往下填寫至 A501 (一格填一組序號，最多可上傳約 500 筆)。',
+    batch_hint: '請上傳檔名為 <b>K01USN</b> 的 Excel 檔案：A1 儲存格需固定填寫 <b>USN</b>，序號請從 A2 開始往下填寫至 A10001 (一格填一組序號，最多可上傳 10,000 筆)。',
     label_op_type: "操作類型：",
     radio_in: "入庫",
     radio_out: "出庫(發料)",
@@ -3001,6 +3078,45 @@ const I18N = {
     exec_menu_inventory: "Inventory Data Maintenance",
     exec_menu_appearance: "Backgrounds & Layout",
     exec_menu_dataview: "Data View & Export",
+    query_snlist: "🔢 Serial Number List",
+    snl_title: "🔢 Serial Number List",
+    snl_note: "Only serial numbers stored in the serial list since serial inbound. It is completely separate from the inventory table (part-number inbound) and is not calculated together with it.",
+    snl_pallet: "Pallet",
+    snl_warehouse: "Warehouse",
+    snl_part: "Part No.",
+    snl_search: "Search",
+    snl_export: "Export Excel",
+    snl_clear: "Clear",
+    snl_tab_list: "Serial list",
+    snl_tab_total: "Serial totals (per pallet & part)",
+    snl_loading: "Searching...",
+    snl_summary: "{pallets} pallets, {total} serial numbers, total quantity {qty}",
+    snl_cut: "(the filter matches {total}; only the first {shown} were read)",
+    snl_none: "No serial number data matches",
+    snl_more: "The screen shows at most the first {n} rows; export to Excel to see the rest.",
+    snl_group_title: "Pallet {p}  {n} rows  Qty {q}",
+    snl_h_wh: "Warehouse",
+    snl_h_part: "Part No.",
+    snl_h_qty: "Qty",
+    snl_t_pallet: "Pallet",
+    snl_t_cnt: "SN count",
+    snl_sub_title: "[Pallet {p} subtotal]",
+    snl_grand: "[Grand total]",
+    snl_exporting: "Exporting...",
+    snl_exported: "Exported {n} serial numbers: {file}",
+    snl_nodata: "There is no data to export!",
+    snl_x_title: "Serial Number List",
+    snl_x_pallet: "Pallet {p}",
+    snl_x_info: "{n} rows  Qty {q}",
+    snl_sheet_list: "SN List",
+    snl_sheet_total: "SN Totals",
+    snl_sheet_flat: "SN Detail",
+    sn_dup_note: "{n} serial number(s) are already in the serial list (or repeated in the same batch) and were skipped, not stored twice: {list}",
+    batch_over_limit: "[Error] Too many serial numbers! At most {max} per upload; the file has {n} more below A{max1}. Stopped. Please split it into several files.",
+    pallet_sn_only: "This pallet has {n} serial number(s) in the serial list (qty {qty}) and nothing in the inventory table. Shipping the whole pallet deletes them too.",
+    pallet_sn_note: "The serial list has {n} more (qty {qty}); they are shipped out too.",
+    rename_sn_only: "This pallet only has data in the serial list; whole-pallet renaming on this page currently supports pallets that have data in the inventory table.",
+    rename_sn_note: "(the serial list has {n} more that will be renamed too)",
     exec_menu_users: "Users & Permissions",
     ac_title: "👥 Users & Permissions",
     ac_form_add: "Add account",
@@ -3342,7 +3458,7 @@ const I18N = {
     btn_skip_home: "Skip & Go Home",
     exception_list_title: "SNs Not Found in Inventory:",
     batch_title: "Batch Upload (Excel SN)",
-    batch_hint: 'Please upload an Excel file named <b>K01USN</b>: cell A1 must be <b>USN</b>, and SNs should be entered from A2 down to A501 (one SN per cell, up to about 500 records).',
+    batch_hint: 'Please upload an Excel file named <b>K01USN</b>: cell A1 must be <b>USN</b>, and SNs should be entered from A2 down to A10001 (one SN per cell, up to 10,000 records).',
     label_op_type: "Operation Type:",
     radio_in: "Inbound",
     radio_out: "Outbound",
@@ -4317,7 +4433,7 @@ const PAGE_LEVEL = {
   // 第 6 張（lv6.webp）團團圓圓
   'page-batch-upload': 6, 'page-batch-confirm': 6, 'page-query-inventory': 6,
   // 第 7 張（lv7.webp）樹葉右
-  'page-query-choice': 7, 'page-leave-menu': 7, 'page-leave-board': 7, 'page-leave-mine': 7, 'page-query-empty-pallet': 7, 'page-query-sn': 7,
+  'page-query-choice': 7, 'page-query-snlist': 7, 'page-leave-menu': 7, 'page-leave-board': 7, 'page-leave-mine': 7, 'page-query-empty-pallet': 7, 'page-query-sn': 7,
   // 第 8 張（lv8.webp）溫泉
   'page-special-choice': 8, 'page-special-inbound-choice': 8, 'page-special-outbound-choice': 8, 'page-special-sn': 8, 'page-special-part': 8, 'page-special-reason': 8,
   // 第 9 張（lv9.webp）墨鏡貓 NG
@@ -5398,6 +5514,7 @@ function submitInbound() {
     document.getElementById('success-msg').innerText = tr('success_sn_inbound', {
       user: res.username, pallet: currentInboundData.pallet, count: res.count
     });
+    snDupNote_(res);
     showPage('page-success');
   }).processInbound(currentInboundData);
 }
@@ -5414,16 +5531,17 @@ function searchPallet() {
     const tbody = document.querySelector('#pallet-detail-table tbody');
     tbody.innerHTML = '';
 
+    const snN = Number(res.snCount) || 0, snQ = Number(res.snQty) || 0;   // 序號列表（獨立存放）裡這個棧板的資料
     if (res.list.length === 0) {
-      summary.innerText = tr('pallet_no_stock');
+      summary.innerText = snN > 0 ? tr('pallet_sn_only', { n: snN, qty: snQ }) : tr('pallet_no_stock');
       tbody.innerHTML = `<tr><td colspan="4">${tr('no_data_row')}</td></tr>`;
       area.style.display = 'block';
-      currentPalletSearchResult = { palletNo: palletNo, totalQty: 0 };
+      currentPalletSearchResult = { palletNo: palletNo, totalQty: snQ };
       return;
     }
 
-    currentPalletSearchResult = { palletNo: palletNo, totalQty: res.totalQty };
-    summary.innerText = tr('pallet_summary', { qty: res.totalQty, n: res.list.length });
+    currentPalletSearchResult = { palletNo: palletNo, totalQty: res.totalQty + snQ };
+    summary.innerText = tr('pallet_summary', { qty: res.totalQty, n: res.list.length }) + (snN > 0 ? '　' + tr('pallet_sn_note', { n: snN, qty: snQ }) : '');
     res.list.forEach(item => {
       let tr2 = document.createElement('tr');
       tr2.innerHTML = `<td>${item.warehouse}</td><td>${item.partNo}</td><td>${item.sn}</td><td>${item.qty}</td>`;
@@ -5684,15 +5802,20 @@ async function parseBatchFile() {
       throw new Error('【錯誤】Excel 檔 A1 儲存格必須固定寫 USN，已立即停止動作！');
     }
 
-    // 3. 讀取 A2:A501 (最多500筆)，並剔除空白列
+    // 3. 讀取 A2:A10001 (最多10000筆)，並剔除空白列
     const validSNList = [];
-    for (let i = 1; i <= 500 && i < rows.length; i++) {
+    for (let i = 1; i <= 10000 && i < rows.length; i++) {
       const cellVal = String((rows[i] && rows[i][0]) || '').trim();
       if (cellVal !== '') validSNList.push(cellVal.toUpperCase());
     }
 
+    // 超過上限：A10001 之後還有序號就直接停止，避免只傳一半
+    let extraSN = 0;
+    for (let i = 10001; i < rows.length; i++) { if (String((rows[i] && rows[i][0]) || '').trim() !== '') extraSN++; }
+    if (extraSN > 0) throw new Error(tr('batch_over_limit', { max: 10000, max1: 10001, n: extraSN }));
+
     if (validSNList.length === 0) {
-      throw new Error('【錯誤】A2 至 A501 內未讀取到有效序號資料，已立即停止動作！');
+      throw new Error('【錯誤】A2 至 A10001 內未讀取到有效序號資料，已立即停止動作！');
     }
 
     btn.disabled = false;
@@ -5781,6 +5904,7 @@ function confirmBatchSubmit() {
         document.getElementById('success-msg').innerText = tr('success_batch_in', {
           user: res.username, count: res.count, wh: currentBatchData.warehouse, part: currentBatchData.partNo
         });
+    snDupNote_(res);
         showPage('page-success');
       } else {
         if (res.notFoundCount > 0) {
@@ -6459,6 +6583,172 @@ function acCall_(fn, args) {
     })
     .withFailureHandler(function(err) { alert(err.message); })
     [fn].apply(null, args.concat([currentExecutorUser, currentExecutorPass]));
+}
+
+/* ============================================================
+ * 序號庫存列表：序號入庫的資料獨立存放（sn_inventory），不與庫存總表一起放、也不一起計算
+ *  - 依棧板號排序（自然排序：F2 排在 F10 前面），每個棧板下列出 倉別、料號、SN、數量
+ *  - 「序號總計」：每個棧板、每個料號各有幾筆序號、數量多少
+ *  - 匯出 Excel：序號庫存列表（同樣的分組呈現）＋ 序號總計 ＋ 序號明細（平面表，可篩選）
+ * ============================================================ */
+var snlState = { data: null, tab: 'list' };
+const SNL_SHOW_MAX = 3000;
+
+function snlCmp_(a, b) { return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' }); }
+function goToSnList() {
+  ['snl-pallet', 'snl-warehouse', 'snl-part', 'snl-sn'].forEach(function(id) { document.getElementById(id).value = ''; });
+  showPage('page-query-snlist');
+  snlTab('list');
+  snlSearch();
+}
+function snlClear() {
+  ['snl-pallet', 'snl-warehouse', 'snl-part', 'snl-sn'].forEach(function(id) { document.getElementById(id).value = ''; });
+  snlSearch();
+}
+function snlFilters_() {
+  const v = function(id) { return document.getElementById(id).value.trim(); };
+  return { pallet: v('snl-pallet'), warehouse: v('snl-warehouse'), partNo: v('snl-part'), sn: v('snl-sn') };
+}
+function snlFetch_(limit, ok, fail) {
+  google.script.run
+    .withSuccessHandler(function(res) { if (!res.success) { fail(res.msg || ''); return; } ok(res); })
+    .withFailureHandler(function(err) { fail(err.message); })
+    .getSnList(snlFilters_(), limit);
+}
+function snlTab(which) {
+  snlState.tab = which;
+  document.getElementById('snl-list').style.display = which === 'list' ? 'block' : 'none';
+  document.getElementById('snl-total').style.display = which === 'total' ? 'block' : 'none';
+  document.getElementById('snl-tab-list').className = which === 'list' ? 'ap-mode-on' : 'ap-mode-off';
+  document.getElementById('snl-tab-total').className = which === 'total' ? 'ap-mode-on' : 'ap-mode-off';
+}
+function snlSearch() {
+  const sum = document.getElementById('snl-summary');
+  sum.innerText = tr('snl_loading');
+  snlFetch_(20000, function(res) { snlState.data = res; snlRender_(); }, function(msg) { sum.innerText = msg; });
+}
+// 依棧板分組（棧板自然排序；組內依 倉別、料號、SN 排序）
+function snlGroups_(data) {
+  const map = {};
+  data.rows.forEach(function(r) { (map[r[0]] = map[r[0]] || []).push(r); });
+  return Object.keys(map).sort(snlCmp_).map(function(p) {
+    const rows = map[p].slice().sort(function(a, b) { return snlCmp_(a[1], b[1]) || snlCmp_(a[2], b[2]) || snlCmp_(a[3], b[3]); });
+    return { pallet: p, rows: rows, qty: rows.reduce(function(s, r) { return s + Number(r[4] || 0); }, 0) };
+  });
+}
+function snlSummaryGroups_(data) {
+  const map = {};
+  data.summary.forEach(function(r) { (map[r[0]] = map[r[0]] || []).push(r); });
+  return Object.keys(map).sort(snlCmp_).map(function(p) {
+    const rows = map[p].slice().sort(function(a, b) { return snlCmp_(a[1], b[1]) || snlCmp_(a[2], b[2]); });
+    return { pallet: p, rows: rows, cnt: rows.reduce(function(s, r) { return s + Number(r[3] || 0); }, 0), qty: rows.reduce(function(s, r) { return s + Number(r[4] || 0); }, 0) };
+  });
+}
+function snlTable_(heads) {
+  const table = document.createElement('table'); table.className = 'snl-tbl';
+  const trh = document.createElement('tr');
+  heads.forEach(function(h) { const th = document.createElement('th'); th.textContent = h; trh.appendChild(th); });
+  const thead = document.createElement('thead'); thead.appendChild(trh); table.appendChild(thead);
+  table.appendChild(document.createElement('tbody'));
+  return table;
+}
+function snlRow_(tbody, cells, cls) {
+  const tr_ = document.createElement('tr'); if (cls) tr_.className = cls;
+  cells.forEach(function(c) { const td = document.createElement('td'); td.textContent = String(c); tr_.appendChild(td); });
+  tbody.appendChild(tr_);
+}
+function snlRender_() {
+  const d = snlState.data;
+  let s = tr('snl_summary', { pallets: d.pallets, total: d.total, qty: d.qty });
+  if (d.total > d.shown) s += '　' + tr('snl_cut', { total: d.total, shown: d.shown });
+  document.getElementById('snl-summary').innerText = s;
+
+  // 序號列表：每個棧板一組
+  const lb = document.getElementById('snl-list'); lb.innerHTML = '';
+  if (!d.rows.length) lb.appendChild(apEl_('div', 'lv-card', tr('snl_none')));
+  let shown = 0;
+  snlGroups_(d).forEach(function(g) {
+    if (shown >= SNL_SHOW_MAX) return;
+    lb.appendChild(apEl_('div', 'snl-pallet', tr('snl_group_title', { p: g.pallet, n: g.rows.length, q: g.qty })));
+    const table = snlTable_([tr('snl_h_wh'), tr('snl_h_part'), 'SN', tr('snl_h_qty')]);
+    const tb = table.querySelector('tbody');
+    g.rows.forEach(function(r) { if (shown < SNL_SHOW_MAX) { snlRow_(tb, [r[1], r[2], r[3], r[4]]); shown++; } });
+    lb.appendChild(table);
+  });
+  if (shown >= SNL_SHOW_MAX && d.shown > SNL_SHOW_MAX) lb.appendChild(apEl_('div', 'snl-note', tr('snl_more', { n: SNL_SHOW_MAX })));
+
+  // 序號總計：每個棧板各料號的筆數與數量（含棧板小計與總計）
+  const tbx = document.getElementById('snl-total'); tbx.innerHTML = '';
+  if (!d.summary.length) { tbx.appendChild(apEl_('div', 'lv-card', tr('snl_none'))); return; }
+  const table = snlTable_([tr('snl_t_pallet'), tr('snl_h_wh'), tr('snl_h_part'), tr('snl_t_cnt'), tr('snl_h_qty')]);
+  const tb = table.querySelector('tbody');
+  let gc = 0, gq = 0;
+  snlSummaryGroups_(d).forEach(function(g) {
+    g.rows.forEach(function(r) { snlRow_(tb, [r[0], r[1], r[2], r[3], r[4]]); });
+    snlRow_(tb, ['', '', tr('snl_sub_title', { p: g.pallet }), g.cnt, g.qty], 'snl-sub');
+    gc += g.cnt; gq += g.qty;
+  });
+  snlRow_(tb, ['', '', tr('snl_grand'), gc, gq], 'snl-grand');
+  tbx.appendChild(table);
+}
+
+function snlExport() {
+  const sum = document.getElementById('snl-summary');
+  sum.innerText = tr('snl_exporting');
+  snlFetch_(100000, function(res) {
+    if (!res.total) { sum.innerText = ''; alert(tr('snl_nodata')); return; }
+    const p2 = function(n) { return String(n).padStart(2, '0'); };
+    const now = new Date();
+    const stamp = now.getFullYear() + '/' + p2(now.getMonth() + 1) + '/' + p2(now.getDate()) + ' ' + p2(now.getHours()) + ':' + p2(now.getMinutes());
+    const groups = snlGroups_(res), sgroups = snlSummaryGroups_(res);
+
+    // 1) 序號庫存列表：每個棧板一組，下面是 倉別、料號、SN、數量
+    const a1 = [[tr('snl_x_title') + '　' + stamp, '', '', '', ''], []];
+    groups.forEach(function(g) {
+      a1.push([tr('snl_x_pallet', { p: g.pallet }), '', '', '', tr('snl_x_info', { n: g.rows.length, q: g.qty })]);
+      a1.push(['', tr('snl_h_wh'), tr('snl_h_part'), 'SN', tr('snl_h_qty')]);
+      g.rows.forEach(function(r) { a1.push(['', r[1], r[2], r[3], Number(r[4])]); });
+      a1.push([]);
+    });
+    const ws1 = XLSX.utils.aoa_to_sheet(a1);
+    ws1['!cols'] = [{ wch: 14 }, { wch: 12 }, { wch: 24 }, { wch: 34 }, { wch: 22 }];
+
+    // 2) 序號總計：每個棧板各料號的筆數與數量（棧板小計＋總計）
+    const a2 = [[tr('snl_t_pallet'), tr('snl_h_wh'), tr('snl_h_part'), tr('snl_t_cnt'), tr('snl_h_qty')]];
+    let gc = 0, gq = 0;
+    sgroups.forEach(function(g) {
+      g.rows.forEach(function(r) { a2.push([r[0], r[1], r[2], Number(r[3]), Number(r[4])]); });
+      a2.push(['', '', tr('snl_sub_title', { p: g.pallet }), g.cnt, g.qty]);
+      gc += g.cnt; gq += g.qty;
+    });
+    a2.push(['', '', tr('snl_grand'), gc, gq]);
+    const ws2 = XLSX.utils.aoa_to_sheet(a2);
+    ws2['!cols'] = [{ wch: 14 }, { wch: 12 }, { wch: 30 }, { wch: 12 }, { wch: 12 }];
+
+    // 3) 序號明細：平面表（可用 Excel 篩選、樞紐分析）
+    const a3 = [[tr('snl_t_pallet'), tr('snl_h_wh'), tr('snl_h_part'), 'SN', tr('snl_h_qty')]];
+    groups.forEach(function(g) { g.rows.forEach(function(r) { a3.push([g.pallet, r[1], r[2], r[3], Number(r[4])]); }); });
+    const ws3 = XLSX.utils.aoa_to_sheet(a3);
+    ws3['!cols'] = [{ wch: 14 }, { wch: 12 }, { wch: 24 }, { wch: 34 }, { wch: 10 }];
+    ws3['!autofilter'] = { ref: 'A1:E' + a3.length };
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws1, tr('snl_sheet_list'));
+    XLSX.utils.book_append_sheet(wb, ws2, tr('snl_sheet_total'));
+    XLSX.utils.book_append_sheet(wb, ws3, tr('snl_sheet_flat'));
+    const fname = tr('snl_sheet_list') + '_' + now.getFullYear() + p2(now.getMonth() + 1) + p2(now.getDate()) + '_' + p2(now.getHours()) + p2(now.getMinutes()) + '.xlsx';
+    XLSX.writeFile(wb, fname);
+    sum.innerText = tr('snl_exported', { n: res.rows.length, file: fname }) + (res.total > res.shown ? '　' + tr('snl_cut', { total: res.total, shown: res.shown }) : '');
+  }, function(msg) { sum.innerText = ''; alert(msg); });
+}
+
+// 入庫結果：重複的序號只存一筆，其餘略過；告訴操作者
+function snDupNote_(res) {
+  if (res && res.duplicateCount > 0) {
+    const el = document.getElementById('success-msg');
+    const list = (res.duplicates || []).join('、') + (res.duplicateCount > (res.duplicates || []).length ? ' …' : '');
+    el.innerText += '\n\n' + tr('sn_dup_note', { n: res.duplicateCount, list: list });
+  }
 }
 
 /* ============================================================
@@ -8263,7 +8553,7 @@ function searchRenamePallet() {
   google.script.run.withSuccessHandler(function(res) {
     const area = document.getElementById('rename-old-result-area');
     if (!res.success || !res.list || res.list.length === 0) {
-      alert(tr('rename_old_no_data'));
+      alert((res.success && res.snCount > 0) ? tr('rename_sn_only') : tr('rename_old_no_data'));
       area.style.display = 'none';
       currentRenameOldRows = [];
       currentRenameOldPallet = '';
@@ -8271,7 +8561,7 @@ function searchRenamePallet() {
     }
     currentRenameOldRows = res.list;
     currentRenameOldPallet = pallet;
-    document.getElementById('rename-old-summary').innerText = tr('pallet_summary', { qty: res.totalQty, n: res.list.length });
+    document.getElementById('rename-old-summary').innerText = tr('pallet_summary', { qty: res.totalQty, n: res.list.length }) + (res.snCount > 0 ? '　' + tr('rename_sn_note', { n: res.snCount }) : '');
     renderPalletRows_('#rename-old-table tbody', res.list);
     area.style.display = 'block';
   }).getPalletInfo(pallet);
